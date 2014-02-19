@@ -42,11 +42,14 @@ import org.apache.hadoop.fs.Options.Rename;
 import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
+import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.hadoop.hdfs.protocol.AclException;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.protocol.ClientProtocol;
@@ -1818,14 +1821,14 @@ public class FSDirectory implements Closeable {
   /**
    */
   INode unprotectedMkdir(String src, PermissionStatus permissions,
-      long timestamp)
+        List<AclEntry> aclEntries, long timestamp)
       throws IOException {
     byte[][] components = INode.getPathComponents(src);
     INode[] inodes = new INode[components.length];
 
     getRootDir().getExistingPathINodes(components, inodes, false);
     unprotectedMkdir(inodes, inodes.length - 1, components[inodes.length - 1],
-        permissions, timestamp);
+        permissions, aclEntries, timestamp);
     return inodes[inodes.length - 1];
   }
 
@@ -1893,7 +1896,7 @@ public class FSDirectory implements Closeable {
     }
     int i = pos - 1;
     try {
-      // check existing components in the path  
+      // check existing components in the path
       for (; i >= 0; i--) {
         if (commonAncestor == inodes[i]) {
           // Moving an existing node. Stop checking for quota when common
@@ -2183,7 +2186,7 @@ public class FSDirectory implements Closeable {
     return removedNode;
   }
   
-  INode removeChild(INode[] pathComponents, int pos, boolean forRename, 
+  INode removeChild(INode[] pathComponents, int pos, boolean forRename,
           final long nsCount, final long dsCount)
       throws StorageException, TransactionContextException {
     INode removedNode = null;
@@ -2318,7 +2321,7 @@ public class FSDirectory implements Closeable {
     counts.nsCount = 1L;//for self. should not call node.spaceConsumedInTree()
     counts.dsCount = 0L;
     
-    /* We don't need nodesInPath if we could use 'parent' field in 
+    /* We don't need nodesInPath if we could use 'parent' field in
      * INode. using 'parent' is not currently recommended. */
     nodesInPath.add(dir);
 
@@ -2357,7 +2360,7 @@ public class FSDirectory implements Closeable {
       }
     }
 
-    // pop 
+    // pop
     nodesInPath.remove(nodesInPath.size() - 1);
     
     counts.nsCount += parentNamespace;
@@ -2742,7 +2745,154 @@ public class FSDirectory implements Closeable {
     final INodeSymlink symlink = new INodeSymlink(target, mtime, atime, perm);
     return addNode(path, symlink, UNKNOWN_DISK_SPACE);
   }
-  
+
+  void modifyAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
+    writeLock();
+    try {
+      List<AclEntry> newAcl = unprotectedModifyAclEntries(src, aclSpec);
+      fsImage.getEditLog().logSetAcl(src, newAcl);
+    } finally {
+      writeUnlock();
+    }
+  }
+
+  private List<AclEntry> unprotectedModifyAclEntries(String src,
+      List<AclEntry> aclSpec) throws IOException {
+    assert hasWriteLock();
+    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
+    INode inode = resolveLastINode(src, iip);
+    int snapshotId = iip.getLatestSnapshotId();
+    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> newAcl = AclTransformation.mergeAclEntries(existingAcl,
+      aclSpec);
+    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
+    return newAcl;
+  }
+
+  void removeAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
+    writeLock();
+    try {
+      List<AclEntry> newAcl = unprotectedRemoveAclEntries(src, aclSpec);
+      fsImage.getEditLog().logSetAcl(src, newAcl);
+    } finally {
+      writeUnlock();
+    }
+  }
+
+  private List<AclEntry> unprotectedRemoveAclEntries(String src,
+      List<AclEntry> aclSpec) throws IOException {
+    assert hasWriteLock();
+    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
+    INode inode = resolveLastINode(src, iip);
+    int snapshotId = iip.getLatestSnapshotId();
+    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> newAcl = AclTransformation.filterAclEntriesByAclSpec(
+      existingAcl, aclSpec);
+    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
+    return newAcl;
+  }
+
+  void removeDefaultAcl(String src) throws IOException {
+    writeLock();
+    try {
+      List<AclEntry> newAcl = unprotectedRemoveDefaultAcl(src);
+      fsImage.getEditLog().logSetAcl(src, newAcl);
+    } finally {
+      writeUnlock();
+    }
+  }
+
+  private List<AclEntry> unprotectedRemoveDefaultAcl(String src)
+      throws IOException {
+    assert hasWriteLock();
+    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
+    INode inode = resolveLastINode(src, iip);
+    int snapshotId = iip.getLatestSnapshotId();
+    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> newAcl = AclTransformation.filterDefaultAclEntries(
+      existingAcl);
+    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
+    return newAcl;
+  }
+
+  void removeAcl(String src) throws IOException {
+    writeLock();
+    try {
+      unprotectedRemoveAcl(src);
+      fsImage.getEditLog().logSetAcl(src, AclFeature.EMPTY_ENTRY_LIST);
+    } finally {
+      writeUnlock();
+    }
+  }
+
+  private void unprotectedRemoveAcl(String src) throws IOException {
+    assert hasWriteLock();
+    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
+    INode inode = resolveLastINode(src, iip);
+    int snapshotId = iip.getLatestSnapshotId();
+    AclStorage.removeINodeAcl(inode, snapshotId);
+  }
+
+  void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+    writeLock();
+    try {
+      List<AclEntry> newAcl = unprotectedSetAcl(src, aclSpec);
+      fsImage.getEditLog().logSetAcl(src, newAcl);
+    } finally {
+      writeUnlock();
+    }
+  }
+
+  List<AclEntry> unprotectedSetAcl(String src, List<AclEntry> aclSpec)
+      throws IOException {
+    // ACL removal is logged to edits as OP_SET_ACL with an empty list.
+    if (aclSpec.isEmpty()) {
+      unprotectedRemoveAcl(src);
+      return AclFeature.EMPTY_ENTRY_LIST;
+    }
+
+    assert hasWriteLock();
+    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
+    INode inode = resolveLastINode(src, iip);
+    int snapshotId = iip.getLatestSnapshotId();
+    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> newAcl = AclTransformation.replaceAclEntries(existingAcl,
+      aclSpec);
+    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
+    return newAcl;
+  }
+
+  AclStatus getAclStatus(String src) throws IOException {
+    String srcs = normalizePath(src);
+    readLock();
+    try {
+      // There is no real inode for the path ending in ".snapshot", so return a
+      // non-null, unpopulated AclStatus.  This is similar to getFileInfo.
+      if (srcs.endsWith(HdfsConstants.SEPARATOR_DOT_SNAPSHOT_DIR) &&
+          getINode4DotSnapshot(srcs) != null) {
+        return new AclStatus.Builder().owner("").group("").build();
+      }
+      INodesInPath iip = rootDir.getLastINodeInPath(srcs, true);
+      INode inode = resolveLastINode(src, iip);
+      int snapshotId = iip.getPathSnapshotId();
+      List<AclEntry> acl = AclStorage.readINodeAcl(inode, snapshotId);
+      return new AclStatus.Builder()
+          .owner(inode.getUserName()).group(inode.getGroupName())
+          .stickyBit(inode.getFsPermission(snapshotId).getStickyBit())
+          .addEntries(acl).build();
+    } finally {
+      readUnlock();
+    }
+  }
+
+  private static INode resolveLastINode(String src, INodesInPath iip)
+      throws FileNotFoundException {
+    INode inode = iip.getLastINode();
+    if (inode == null)
+      throw new FileNotFoundException("cannot find " + src);
+    return inode;
+  }
+
   /**
    * Caches frequently used file names to reuse file name objects and
    * reduce heap size.

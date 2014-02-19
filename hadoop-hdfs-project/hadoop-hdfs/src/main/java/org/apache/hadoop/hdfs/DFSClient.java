@@ -50,37 +50,22 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.VolumeId;
 import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.NamenodeSelector.NamenodeHandle;
 import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
-import org.apache.hadoop.hdfs.protocol.ClientProtocol;
-import org.apache.hadoop.hdfs.protocol.CorruptFileBlocks;
-import org.apache.hadoop.hdfs.protocol.DSQuotaExceededException;
-import org.apache.hadoop.hdfs.protocol.DatanodeID;
-import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
-import org.apache.hadoop.hdfs.protocol.DirectoryListing;
-import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
-import org.apache.hadoop.hdfs.protocol.HdfsBlocksMetadata;
-import org.apache.hadoop.hdfs.protocol.HdfsConstants;
+import org.apache.hadoop.hdfs.protocol.AclException;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.SafeModeAction;
-import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
-import org.apache.hadoop.hdfs.protocol.LastUpdatedContentSummary;
-import org.apache.hadoop.hdfs.protocol.LocatedBlock;
-import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
-import org.apache.hadoop.hdfs.protocol.NSQuotaExceededException;
-import org.apache.hadoop.hdfs.protocol.UnresolvedPathException;
 import org.apache.hadoop.hdfs.protocol.datatransfer.DataTransferEncryptor;
 import org.apache.hadoop.hdfs.protocol.datatransfer.IOStreamPair;
 import org.apache.hadoop.hdfs.protocol.datatransfer.Op;
 import org.apache.hadoop.hdfs.protocol.datatransfer.ReplaceDatanodeOnFailure;
 import org.apache.hadoop.hdfs.protocol.datatransfer.Sender;
-import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.BlockOpResponseProto;
-import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.OpBlockChecksumResponseProto;
-import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.Status;
 import org.apache.hadoop.hdfs.protocolPB.PBHelper;
 import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
 import org.apache.hadoop.hdfs.security.token.block.DataEncryptionKey;
@@ -380,7 +365,7 @@ public class DFSClient implements java.io.Closeable {
   Conf getConf() {
     return dfsClientConf;
   }
-  
+
   /**
    * A map from file names to {@link DFSOutputStream} objects
    * that are currently being written by this client.
@@ -390,7 +375,7 @@ public class DFSClient implements java.io.Closeable {
       new HashMap<>();
 
   private boolean shortCircuitLocalReads;
-  
+
   /**
    * Same as this(NameNode.getAddress(conf), conf);
    *
@@ -440,7 +425,7 @@ public class DFSClient implements java.io.Closeable {
     this.socketFactory = NetUtils.getSocketFactory(conf, ClientProtocol.class);
     this.dtpReplaceDatanodeOnFailure = ReplaceDatanodeOnFailure.get(conf);
 
-    // The hdfsTimeout is currently the same as the ipc timeout 
+    // The hdfsTimeout is currently the same as the ipc timeout
     this.hdfsTimeout = Client.getTimeout(conf);
     this.ugi = UserGroupInformation.getCurrentUser();
     
@@ -487,7 +472,7 @@ public class DFSClient implements java.io.Closeable {
     this.socketCache = SocketCache
         .getInstance(dfsClientConf.socketCacheCapacity,
             dfsClientConf.socketCacheExpiry);
-    
+
 
     this.MAX_RPC_RETRIES =
         conf.getInt(DFSConfigKeys.DFS_CLIENT_RETRIES_ON_FAILURE_KEY,
@@ -706,7 +691,7 @@ public class DFSClient implements java.io.Closeable {
           }
         };
         doClientActionWithRetry(handler, "renewLease");
-        
+
         updateLastLeaseRenewal();
         return true;
       } catch (IOException e) {
@@ -999,7 +984,7 @@ public class DFSClient implements java.io.Closeable {
     }
     return false;
   }
-  
+
   /**
    * Cancel a delegation token
    *
@@ -1112,7 +1097,7 @@ public class DFSClient implements java.io.Closeable {
       throws IOException {
     return getLocatedBlocks(src, start, dfsClientConf.prefetchSize);
   }
-  
+
   /*
    * This is just a wrapper around callGetBlockLocations, but non-static so that
    * we can stub it out for tests.
@@ -1544,14 +1529,14 @@ public class DFSClient implements java.io.Closeable {
       favoredNodeStrs = new String[favoredNodes.length];
       for (int i = 0; i < favoredNodes.length; i++) {
         favoredNodeStrs[i] = 
-            favoredNodes[i].getAddress().getHostAddress() + ":" 
+            favoredNodes[i].getAddress().getHostAddress() + ":"
                          + favoredNodes[i].getPort();
       }
     }
     final DFSOutputStream result = DFSOutputStream
         .newStreamForCreate(this, src, masked, flag, createParent, replication,
             blockSize, progress, buffersize,
-            dfsClientConf.createChecksum(checksumOpt), favoredNodeStrs, policy, isStoreSmallFilesInDB(), 
+            dfsClientConf.createChecksum(checksumOpt), favoredNodeStrs, policy, isStoreSmallFilesInDB(),
             getDBFileMaxSize());
     beginFileLease(src, result);
     return result;
@@ -1791,7 +1776,7 @@ public class DFSClient implements java.io.Closeable {
           DSQuotaExceededException.class, UnresolvedPathException.class);
     }
   }
-  
+
   /**
    * @return All the existing storage policies
    */
@@ -2660,7 +2645,7 @@ public class DFSClient implements java.io.Closeable {
     } else {
       finalPermission = absPermission;
     }
-    
+
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(src + ": masked=" + finalPermission);
@@ -2776,7 +2761,7 @@ public class DFSClient implements java.io.Closeable {
       super(in);
     }
   }
-  
+
   boolean shouldTryShortCircuitRead(InetSocketAddress targetAddr) {
     return shortCircuitLocalReads && isLocalAddress(targetAddr);
   }
@@ -2806,7 +2791,7 @@ public class DFSClient implements java.io.Closeable {
   void disableShortCircuit() {
     shortCircuitLocalReads = false;
   }
-  
+
 
   /**
    * Action Handler to encapsualte the client requests to the namenode.
@@ -2925,8 +2910,8 @@ public class DFSClient implements java.io.Closeable {
     //will put the NN address in blacklist and send an RPC to NN to get a fresh list of NNs.
     //After obtaining a fresh list from server, the NamenodeSector will wipe the NN balacklist.
     //It is quite possible that the refesh list of NNs may again contain the descriptors
-    //for dead Namenodes (depends on the convergence rate of Leader Election). 
-    //To avoid contacting a dead node a list of black listed namenodes is also maintained on the 
+    //for dead Namenodes (depends on the convergence rate of Leader Election).
+    //To avoid contacting a dead node a list of black listed namenodes is also maintained on the
     //client side to avoid contacting dead NNs
     List<ActiveNode> blackListedNamenodes = new ArrayList<>();
 
@@ -2947,7 +2932,7 @@ public class DFSClient implements java.io.Closeable {
       } catch (IOException e) {
         exception = e;
         if (ExceptionCheck.isLocalConnectException(e)) {
-          //black list the namenode 
+          //black list the namenode
           //so that it is not used again
           if (handle != null) {
             LOG.debug(thisFnID + ") " + callerID + " RPC failed. NN used was " +
@@ -3282,6 +3267,96 @@ public class DFSClient implements java.io.Closeable {
     }
   }
 
+  void modifyAclEntries(String src, List<AclEntry> aclSpec)
+          throws IOException {
+    checkOpen();
+    try {
+      namenode.modifyAclEntries(src, aclSpec);
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              SnapshotAccessControlException.class,
+              UnresolvedPathException.class);
+    }
+  }
+
+  void removeAclEntries(String src, List<AclEntry> aclSpec)
+          throws IOException {
+    checkOpen();
+    try {
+      namenode.removeAclEntries(src, aclSpec);
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              SnapshotAccessControlException.class,
+              UnresolvedPathException.class);
+    }
+  }
+
+  void removeDefaultAcl(String src) throws IOException {
+    checkOpen();
+    try {
+      namenode.removeDefaultAcl(src);
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              SnapshotAccessControlException.class,
+              UnresolvedPathException.class);
+    }
+  }
+
+  void removeAcl(String src) throws IOException {
+    checkOpen();
+    try {
+      namenode.removeAcl(src);
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              SnapshotAccessControlException.class,
+              UnresolvedPathException.class);
+    }
+  }
+
+  void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+    checkOpen();
+    try {
+      namenode.setAcl(src, aclSpec);
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              SnapshotAccessControlException.class,
+              UnresolvedPathException.class);
+    }
+  }
+
+  AclStatus getAclStatus(String src) throws IOException {
+    checkOpen();
+    try {
+      return namenode.getAclStatus(src);
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              UnresolvedPathException.class);
+    }
+  }
+
+
   /**
    * Send the client request to all namenodes in the cluster
    * @param handler
@@ -3296,7 +3371,7 @@ public class DFSClient implements java.io.Closeable {
       String callerID) throws RemoteException, IOException {
     callerID = callerID.toUpperCase();
     long thisFnID = fnID.incrementAndGet();
-    
+
     Exception exception = null;
     boolean success = false;
     for (NamenodeSelector.NamenodeHandle handle : namenodeSelector
@@ -3306,12 +3381,12 @@ public class DFSClient implements java.io.Closeable {
             handle.getNamenode());
         Object obj = handler.doAction(handle.getRPCHandle());
         success = true;
-        //no exception 
+        //no exception
         return obj;
       } catch (Exception e) {
         exception = e;
         if (ExceptionCheck.isLocalConnectException(e)) {
-          //black list the namenode 
+          //black list the namenode
           //so that it is not used again
           if (handle != null) {
             LOG.warn(thisFnID + ") " + callerID + " RPC faild. NN used was " +

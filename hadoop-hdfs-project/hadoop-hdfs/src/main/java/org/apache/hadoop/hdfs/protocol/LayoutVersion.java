@@ -100,8 +100,9 @@ public class LayoutVersion {
         "Serialize block lists with delta-encoded variable length ints, " +
             "add OP_UPDATE_BLOCKS"),
     ADD_DATANODE_AND_STORAGE_UUIDS(-41, "Replace StorageID with DatanodeUuid."
-        + " Use distinct StorageUuid per storage directory.");
-    
+        + " Use distinct StorageUuid per storage directory."),
+    EXTENDED_ACL(-53, "Extended ACL");
+  
     final int lv;
     final int ancestorLV;
     final String description;
