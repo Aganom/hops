@@ -103,8 +103,9 @@ public class LayoutVersion {
     RESERVED_REL1_2_0(-41, -32, "Reserved for release 1.2.0", true, CONCAT),
     ADD_INODE_ID(-42, -40, "Assign a unique inode id for each inode", false),
     ADD_DATANODE_AND_STORAGE_UUIDS(-43, "Replace StorageID with DatanodeUuid."
-        + " Use distinct StorageUuid per storage directory.");
-    
+        + " Use distinct StorageUuid per storage directory."),
+    EXTENDED_ACL(-53, "Extended ACL");
+  
     final int lv;
     final int ancestorLV;
     final String description;

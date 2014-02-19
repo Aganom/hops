@@ -17,17 +17,20 @@
  */
 package org.apache.hadoop.hdfs.web.resources;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
+import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 public class TestParam {
   public static final Log LOG = LogFactory.getLog(TestParam.class);
@@ -262,4 +265,48 @@ public class TestParam {
     UserParam userParam = new UserParam("a$");
     assertNotNull(userParam.getValue());
   }
+
+  @Test
+  public void testAclPermissionParam() {
+    final AclPermissionParam p =
+        new AclPermissionParam("user::rwx,group::r--,other::rwx,user:user1:rwx");
+    List<AclEntry> setAclList =
+        AclEntry.parseAclSpec("user::rwx,group::r--,other::rwx,user:user1:rwx",
+            true);
+    Assert.assertEquals(setAclList.toString(), p.getAclPermission(true)
+        .toString());
+
+    new AclPermissionParam("user::rw-,group::rwx,other::rw-,user:user1:rwx");
+    try {
+      new AclPermissionParam("user::rw--,group::rwx-,other::rw-");
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      LOG.info("EXPECTED: " + e);
+    }
+
+    new AclPermissionParam(
+        "user::rw-,group::rwx,other::rw-,user:user1:rwx,group:group1:rwx,other::rwx,mask::rwx,default:user:user1:rwx");
+
+    try {
+      new AclPermissionParam("user:r-,group:rwx,other:rw-");
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      LOG.info("EXPECTED: " + e);
+    }
+
+    try {
+      new AclPermissionParam("default:::r-,default:group::rwx,other::rw-");
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      LOG.info("EXPECTED: " + e);
+    }
+
+    try {
+      new AclPermissionParam("user:r-,group::rwx,other:rw-,mask:rw-,temp::rwx");
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      LOG.info("EXPECTED: " + e);
+    }
+  }
+
 }

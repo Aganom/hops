@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.Block;
+import org.apache.hadoop.hdfs.protocol.QuotaExceededException;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.util.StringUtils;
 
@@ -296,6 +297,19 @@ public abstract class INode implements Comparable<byte[]> {
     return this.id;
   }
 
+  public AclFeature getAclFeature() {
+    //TODO
+    return null;
+  }
+
+  public void addAclFeature(AclFeature aclFeature){
+    //TODO
+  }
+  
+  public void removeAclFeature(){
+    //TODO
+  }
+  
   /**
    * Check whether this is the root inode.
    */

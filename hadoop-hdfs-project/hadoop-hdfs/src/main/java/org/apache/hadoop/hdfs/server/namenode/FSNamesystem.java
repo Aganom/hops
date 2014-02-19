@@ -74,6 +74,8 @@ import org.apache.hadoop.fs.Options.Rename;
 import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
+import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
@@ -409,7 +411,9 @@ public class FSNamesystem
   private static int DB_IN_MEMORY_FILE_MAX_SIZE;
   private final long BIGGEST_DELETABLE_DIR;
 
-  /**
+  private final AclConfigFlag aclConfigFlag;
+
+    /**
    * Clear all loaded data
    */
   void clear() throws IOException {
@@ -582,6 +586,7 @@ public class FSNamesystem
       this.auditLoggers = initAuditLoggers(conf);
       this.isDefaultAuditLogger = auditLoggers.size() == 1 &&
           auditLoggers.get(0) instanceof DefaultAuditLogger;
+      this.aclConfigFlag = new AclConfigFlag(conf);
     } catch (IOException | RuntimeException e) {
       LOG.error(getClass().getSimpleName() + " initialization failed.", e);
       close();
@@ -2892,7 +2897,7 @@ public class FSNamesystem
    *
    * @param src
    *     path to the file
-   * @param inodesInPath representing each of the components of src. 
+   * @param inodesInPath representing each of the components of src.
    *                     The last INode is the INode for the file.
    * @throws QuotaExceededException
    *     If addition of block exceeds space quota
@@ -7514,6 +7519,130 @@ public class FSNamesystem
     }.handle();
   }
 
+
+  void modifyAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    //TODO
+//    HdfsFileStatus resultingStat = null;
+//    FSPermissionChecker pc = getPermissionChecker();
+//    checkOperation(OperationCategory.WRITE);
+//    byte[][] pathComponents = FSDirectory.getPathComponentsForReservedPath(src);
+//    writeLock();
+//    try {
+//      checkOperation(OperationCategory.WRITE);
+//      checkNameNodeSafeMode("Cannot modify ACL entries on " + src);
+//      src = FSDirectory.resolvePath(src, pathComponents, dir);
+//      checkOwner(pc, src);
+//      dir.modifyAclEntries(src, aclSpec);
+//      resultingStat = getAuditFileInfo(src, false);
+//    } finally {
+//      writeUnlock();
+//    }
+//    getEditLog().logSync();
+//    logAuditEvent(true, "modifyAclEntries", src, null, resultingStat);
+  }
+
+  void removeAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    //TODO
+//    HdfsFileStatus resultingStat = null;
+//    FSPermissionChecker pc = getPermissionChecker();
+//    checkOperation(OperationCategory.WRITE);
+//    byte[][] pathComponents = FSDirectory.getPathComponentsForReservedPath(src);
+//    writeLock();
+//    try {
+//      checkOperation(OperationCategory.WRITE);
+//      checkNameNodeSafeMode("Cannot remove ACL entries on " + src);
+//      src = FSDirectory.resolvePath(src, pathComponents, dir);
+//      checkOwner(pc, src);
+//      dir.removeAclEntries(src, aclSpec);
+//      resultingStat = getAuditFileInfo(src, false);
+//    } finally {
+//      writeUnlock();
+//    }
+//    getEditLog().logSync();
+//    logAuditEvent(true, "removeAclEntries", src, null, resultingStat);
+  }
+
+  void removeDefaultAcl(String src) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    //TODO
+//    HdfsFileStatus resultingStat = null;
+//    FSPermissionChecker pc = getPermissionChecker();
+//    checkOperation(OperationCategory.WRITE);
+//    byte[][] pathComponents = FSDirectory.getPathComponentsForReservedPath(src);
+//    writeLock();
+//    try {
+//      checkOperation(OperationCategory.WRITE);
+//      checkNameNodeSafeMode("Cannot remove default ACL entries on " + src);
+//      src = FSDirectory.resolvePath(src, pathComponents, dir);
+//      checkOwner(pc, src);
+//      dir.removeDefaultAcl(src);
+//      resultingStat = getAuditFileInfo(src, false);
+//    } finally {
+//      writeUnlock();
+//    }
+//    getEditLog().logSync();
+//    logAuditEvent(true, "removeDefaultAcl", src, null, resultingStat);
+  }
+
+  void removeAcl(String src) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    //TODO
+//    HdfsFileStatus resultingStat = null;
+//    FSPermissionChecker pc = getPermissionChecker();
+//    checkOperation(OperationCategory.WRITE);
+//    byte[][] pathComponents = FSDirectory.getPathComponentsForReservedPath(src);
+//    writeLock();
+//    try {
+//      checkOperation(OperationCategory.WRITE);
+//      checkNameNodeSafeMode("Cannot remove ACL on " + src);
+//      src = FSDirectory.resolvePath(src, pathComponents, dir);
+//      checkOwner(pc, src);
+//      dir.removeAcl(src);
+//      resultingStat = getAuditFileInfo(src, false);
+//    } finally {
+//      writeUnlock();
+//    }
+//    getEditLog().logSync();
+//    logAuditEvent(true, "removeAcl", src, null, resultingStat);
+  }
+
+  void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    //TODO
+//    HdfsFileStatus resultingStat = null;
+//    FSPermissionChecker pc = getPermissionChecker();
+//    checkOperation(OperationCategory.WRITE);
+//    byte[][] pathComponents = FSDirectory.getPathComponentsForReservedPath(src);
+//    writeLock();
+//    try {
+//      checkOperation(OperationCategory.WRITE);
+//      checkNameNodeSafeMode("Cannot set ACL on " + src);
+//      src = FSDirectory.resolvePath(src, pathComponents, dir);
+//      checkOwner(pc, src);
+//      dir.setAcl(src, aclSpec);
+//      resultingStat = getAuditFileInfo(src, false);
+//    } finally {
+//      writeUnlock();
+//    }
+//    getEditLog().logSync();
+//    logAuditEvent(true, "setAcl", src, null, resultingStat);
+  }
+
+  AclStatus getAclStatus(String src) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    //TODO
+//    checkOperation(OperationCategory.READ);
+//    readLock();
+//    try {
+//      checkOperation(OperationCategory.READ);
+//      return dir.getAclStatus(src);
+//    } finally {
+//      readUnlock();
+//    }
+    return null;
+  }
 
   /**
    * @see org.apache.hadoop.hdfs.protocol.ClientProtocol#getRepairedBlockLocations
