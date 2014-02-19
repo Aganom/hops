@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Options;
 import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.DirectoryListing;
 import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
@@ -41,6 +42,7 @@ import org.apache.hadoop.hdfs.web.JsonUtil;
 import org.apache.hadoop.hdfs.web.ParamFilter;
 import org.apache.hadoop.hdfs.web.WebHdfsFileSystem;
 import org.apache.hadoop.hdfs.web.resources.AccessTimeParam;
+import org.apache.hadoop.hdfs.web.resources.AclPermissionParam;
 import org.apache.hadoop.hdfs.web.resources.BlockSizeParam;
 import org.apache.hadoop.hdfs.web.resources.BufferSizeParam;
 import org.apache.hadoop.hdfs.web.resources.ConcatSourcesParam;
@@ -327,12 +329,15 @@ public class NamenodeWebHdfsMethods {
       final CreateParentParam createParent,
       @QueryParam(TokenArgumentParam.NAME)
       @DefaultValue(TokenArgumentParam.DEFAULT)
-      final TokenArgumentParam delegationTokenArgument)
+      final TokenArgumentParam delegationTokenArgument,
+      @QueryParam(AclPermissionParam.NAME)
+      @DefaultValue(AclPermissionParam.DEFAULT)
+      final AclPermissionParam aclPermission)
       throws IOException, InterruptedException {
     return put(ugi, delegation, username, doAsUser, ROOT, op, destination,
-        owner, group, permission, overwrite, bufferSize, replication, blockSize,
-        modificationTime, accessTime, renameOptions, createParent,
-        delegationTokenArgument);
+        owner, group, permission, overwrite, bufferSize, replication,
+        blockSize, modificationTime, accessTime, renameOptions, createParent,
+        delegationTokenArgument, aclPermission);
   }
 
   /**
@@ -397,12 +402,15 @@ public class NamenodeWebHdfsMethods {
       final CreateParentParam createParent,
       @QueryParam(TokenArgumentParam.NAME)
       @DefaultValue(TokenArgumentParam.DEFAULT)
-      final TokenArgumentParam delegationTokenArgument)
+      final TokenArgumentParam delegationTokenArgument,
+      @QueryParam(AclPermissionParam.NAME)
+      @DefaultValue(AclPermissionParam.DEFAULT)
+      final AclPermissionParam aclPermission)
       throws IOException, InterruptedException {
 
     init(ugi, delegation, username, doAsUser, path, op, destination, owner,
         group, permission, overwrite, bufferSize, replication, blockSize,
-        modificationTime, accessTime, renameOptions, delegationTokenArgument);
+        modificationTime, accessTime, renameOptions, delegationTokenArgument,aclPermission);
 
     return ugi.doAs(new PrivilegedExceptionAction<Response>() {
       @Override
@@ -412,7 +420,8 @@ public class NamenodeWebHdfsMethods {
           return put(ugi, delegation, username, doAsUser,
               path.getAbsolutePath(), op, destination, owner, group, permission,
               overwrite, bufferSize, replication, blockSize, modificationTime,
-              accessTime, renameOptions, createParent, delegationTokenArgument);
+              accessTime, renameOptions, createParent, delegationTokenArgument,
+              aclPermission);
         } finally {
           REMOTE_ADDRESS.set(null);
         }
@@ -431,7 +440,8 @@ public class NamenodeWebHdfsMethods {
       final AccessTimeParam accessTime,
       final RenameOptionSetParam renameOptions,
       final CreateParentParam createParent,
-      final TokenArgumentParam delegationTokenArgument)
+      final TokenArgumentParam delegationTokenArgument,
+      final AclPermissionParam aclPermission)
       throws IOException, URISyntaxException {
 
     final Configuration conf =
@@ -507,6 +517,26 @@ public class NamenodeWebHdfsMethods {
             new Token<>();
         token.decodeFromUrlString(delegationTokenArgument.getValue());
         np.cancelDelegationToken(token);
+        return Response.ok().type(MediaType.APPLICATION_OCTET_STREAM).build();
+      }
+      case MODIFYACLENTRIES: {
+        np.modifyAclEntries(fullpath, aclPermission.getAclPermission(true));
+        return Response.ok().type(MediaType.APPLICATION_OCTET_STREAM).build();
+      }
+      case REMOVEACLENTRIES: {
+        np.removeAclEntries(fullpath, aclPermission.getAclPermission(false));
+        return Response.ok().type(MediaType.APPLICATION_OCTET_STREAM).build();
+      }
+      case REMOVEDEFAULTACL: {
+        np.removeDefaultAcl(fullpath);
+        return Response.ok().type(MediaType.APPLICATION_OCTET_STREAM).build();
+      }
+      case REMOVEACL: {
+        np.removeAcl(fullpath);
+        return Response.ok().type(MediaType.APPLICATION_OCTET_STREAM).build();
+      }
+      case SETACL: {
+        np.setAcl(fullpath, aclPermission.getAclPermission(true));
         return Response.ok().type(MediaType.APPLICATION_OCTET_STREAM).build();
       }
       default:
@@ -790,6 +820,15 @@ public class NamenodeWebHdfsMethods {
       case CHECKACCESS: {
         np.checkAccess(fullpath, FsAction.getFsAction(fsAction.getValue()));
         return Response.ok().build();
+      }
+      case GETACLSTATUS: {
+        AclStatus status = np.getAclStatus(fullpath);
+        if (status == null) {
+          throw new FileNotFoundException("File does not exist: " + fullpath);
+        }
+    
+        final String js = JsonUtil.toJsonString(status);
+        return Response.ok(js).type(MediaType.APPLICATION_JSON).build();
       }
       default:
         throw new UnsupportedOperationException(op + " is not supported");

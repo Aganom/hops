@@ -309,7 +309,7 @@ public class RawLocalFileSystem extends FileSystem {
         statistics);
   }
   
-  protected OutputStream createOutputStream(Path f, boolean append) 
+  protected OutputStream createOutputStream(Path f, boolean append)
       throws IOException {
     return createOutputStreamWithMode(f, append, null);
   }

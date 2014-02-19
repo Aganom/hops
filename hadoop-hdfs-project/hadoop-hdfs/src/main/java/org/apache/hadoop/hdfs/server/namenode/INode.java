@@ -221,6 +221,18 @@ public abstract class INode implements Comparable<byte[]> {
     this.id = other.getId();
   }
 
+  protected InodeAcl getInodeAcl(){
+    return null;
+  }
+  
+  protected void addInodeAcl(InodeAcl toAdd){
+  
+  }
+  
+  protected void removeInodeAcl(){
+  
+  }
+  
   /**
    * Check whether this is the root inode.
    */

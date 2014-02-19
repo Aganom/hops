@@ -31,6 +31,7 @@ import io.hops.transaction.handler.HopsTransactionalRequestHandler;
 import io.hops.transaction.handler.LightWeightRequestHandler;
 import io.hops.transaction.lock.LockFactory;
 import io.hops.transaction.lock.TransactionLocks;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -1005,6 +1006,8 @@ public class DFSTestUtil {
         };
     quotaApplicationChecker.handle();
   }
+  
+  //TODO: HOPS old runOperations-method contained set-ACL. Maybe we need it as well somewhere
 
   public static ContentSummary getContentSummary(DistributedFileSystem dfs, Path
       path) throws IOException, InterruptedException {

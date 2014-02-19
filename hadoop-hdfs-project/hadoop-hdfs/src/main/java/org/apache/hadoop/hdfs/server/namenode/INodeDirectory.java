@@ -80,6 +80,7 @@ public class INodeDirectory extends INode {
       throws IOException {
     this(permissions, mTime);
     this.setLocalNameNoPersistance(localName);
+    //FIXME: Check if we need constructor with acls
   }
   
   /**
@@ -92,6 +93,7 @@ public class INodeDirectory extends INode {
     super(other);
     //HOP: FIXME: Mahmoud: the new directory has the same id as the "other"
     // directory so we don't need to notify the children of the directory change
+    //FIXME: Make sure that acls are copied
   }
   
   /**

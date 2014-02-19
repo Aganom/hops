@@ -49,6 +49,8 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.VolumeId;
+import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.NamenodeSelector.NamenodeHandle;
@@ -2737,6 +2739,96 @@ public class DFSClient implements java.io.Closeable {
           ". Error repairing corrupt blocks. Bad blocks remain.", ie);
     }
   }
+  
+  public void modifyAclEntries(String src, List<AclEntry> aclSpec)
+      throws IOException {
+//    checkOpen();
+//    try (TraceScope ignored = newPathTraceScope("modifyAclEntries", src)) {
+//      namenode.modifyAclEntries(src, aclSpec);
+//    } catch (RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//          AclException.class,
+//          FileNotFoundException.class,
+//          NSQuotaExceededException.class,
+//          SafeModeException.class,
+//          SnapshotAccessControlException.class,
+//          UnresolvedPathException.class);
+//    }
+  }
+  
+  public void removeAclEntries(String src, List<AclEntry> aclSpec)
+      throws IOException {
+//    checkOpen();
+//    try (TraceScope ignored = tracer.newScope("removeAclEntries")) {
+//      namenode.removeAclEntries(src, aclSpec);
+//    } catch (RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//          AclException.class,
+//          FileNotFoundException.class,
+//          NSQuotaExceededException.class,
+//          SafeModeException.class,
+//          SnapshotAccessControlException.class,
+//          UnresolvedPathException.class);
+//    }
+  }
+  
+  public void removeDefaultAcl(String src) throws IOException {
+//    checkOpen();
+//    try (TraceScope ignored = tracer.newScope("removeDefaultAcl")) {
+//      namenode.removeDefaultAcl(src);
+//    } catch (RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//          AclException.class,
+//          FileNotFoundException.class,
+//          NSQuotaExceededException.class,
+//          SafeModeException.class,
+//          SnapshotAccessControlException.class,
+//          UnresolvedPathException.class);
+//    }
+  }
+  
+  public void removeAcl(String src) throws IOException {
+//    checkOpen();
+//    try (TraceScope ignored = tracer.newScope("removeAcl")) {
+//      namenode.removeAcl(src);
+//    } catch (RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//          AclException.class,
+//          FileNotFoundException.class,
+//          NSQuotaExceededException.class,
+//          SafeModeException.class,
+//          SnapshotAccessControlException.class,
+//          UnresolvedPathException.class);
+//    }
+  }
+  
+  public void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+//    checkOpen();
+//    try (TraceScope ignored = tracer.newScope("setAcl")) {
+//      namenode.setAcl(src, aclSpec);
+//    } catch (RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//          AclException.class,
+//          FileNotFoundException.class,
+//          NSQuotaExceededException.class,
+//          SafeModeException.class,
+//          SnapshotAccessControlException.class,
+//          UnresolvedPathException.class);
+//    }
+  }
+  
+  public AclStatus getAclStatus(String src) throws IOException {
+//    checkOpen();
+//    try (TraceScope ignored = newPathTraceScope("getAclStatus", src)) {
+//      return namenode.getAclStatus(src);
+//    } catch (RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//          AclException.class,
+//          FileNotFoundException.class,
+//          UnresolvedPathException.class);
+//    }
+    return null;
+  }
 
   @Override
   public String toString() {
@@ -3315,5 +3407,7 @@ public class DFSClient implements java.io.Closeable {
           FileNotFoundException.class, UnresolvedPathException.class);
     }
   }
+  
+  
 
 }
