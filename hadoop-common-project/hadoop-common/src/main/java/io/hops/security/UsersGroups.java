@@ -388,7 +388,9 @@ public class UsersGroups {
         groupIds.add(groupId);
 
         if(userId != null) {
-          userGroupDataAccess.addUserToGroups(userId, groupIds);
+          for (int gId : groupIds){
+            userGroupDataAccess.addUserToGroup((int)userId, (int)gId);
+          }
         }
       }
 
