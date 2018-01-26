@@ -290,8 +290,8 @@ public class FsPermission implements Writable {
    * @return boolean true if there is also an ACL (access control list).
    */
   public boolean getAclBit() {
-    // File system subclasses that support the ACL bit would override this.
-    return false;
+    //Since our ACLs are inherit-default, we always have to check for acl, even when the inode itself doesn't have one.
+    return true;
   }
 
   /**

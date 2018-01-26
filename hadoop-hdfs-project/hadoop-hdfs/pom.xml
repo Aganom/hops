@@ -205,6 +205,11 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
       <artifactId>bcprov-jdk16</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+      <version>2.6.1</version>
+    </dependency>
   </dependencies>
 
   <build>

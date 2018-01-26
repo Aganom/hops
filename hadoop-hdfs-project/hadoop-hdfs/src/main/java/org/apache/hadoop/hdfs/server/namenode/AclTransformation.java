@@ -98,8 +98,8 @@ final class AclTransformation {
         }
       }
     }
-    copyDefaultsIfNeeded(aclBuilder);
-    calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
+    //copyDefaultsIfNeeded(aclBuilder);
+    //calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
     return buildAndValidateAcl(aclBuilder);
   }
 
@@ -176,8 +176,8 @@ final class AclTransformation {
         }
       }
     }
-    copyDefaultsIfNeeded(aclBuilder);
-    calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
+    //copyDefaultsIfNeeded(aclBuilder);
+    //calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
     return buildAndValidateAcl(aclBuilder);
   }
 
@@ -224,8 +224,8 @@ final class AclTransformation {
         }
       }
     }
-    copyDefaultsIfNeeded(aclBuilder);
-    calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
+    //copyDefaultsIfNeeded(aclBuilder);
+    //calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
     return buildAndValidateAcl(aclBuilder);
   }
 
@@ -293,25 +293,25 @@ final class AclTransformation {
     }
     // Search for the required base access entries.  If there is a default ACL,
     // then do the same check on the default entries.
-    ScopedAclEntries scopedEntries = new ScopedAclEntries(aclBuilder);
-    for (AclEntryType type: EnumSet.of(USER, GROUP, OTHER)) {
-      AclEntry accessEntryKey = new AclEntry.Builder().setScope(ACCESS)
-        .setType(type).build();
-      if (Collections.binarySearch(scopedEntries.getAccessEntries(),
-          accessEntryKey, ACL_ENTRY_COMPARATOR) < 0) {
-        throw new AclException(
-          "Invalid ACL: the user, group and other entries are required.");
-      }
-      if (!scopedEntries.getDefaultEntries().isEmpty()) {
-        AclEntry defaultEntryKey = new AclEntry.Builder().setScope(DEFAULT)
-          .setType(type).build();
-        if (Collections.binarySearch(scopedEntries.getDefaultEntries(),
-            defaultEntryKey, ACL_ENTRY_COMPARATOR) < 0) {
-          throw new AclException(
-            "Invalid default ACL: the user, group and other entries are required.");
-        }
-      }
-    }
+//    ScopedAclEntries scopedEntries = new ScopedAclEntries(aclBuilder);
+//    for (AclEntryType type: EnumSet.of(USER, GROUP, OTHER)) {
+//      AclEntry accessEntryKey = new AclEntry.Builder().setScope(ACCESS)
+//        .setType(type).build();
+//      if (Collections.binarySearch(scopedEntries.getAccessEntries(),
+//          accessEntryKey, ACL_ENTRY_COMPARATOR) < 0) {
+//        throw new AclException(
+//          "Invalid ACL: the user, group and other entries are required.");
+//      }
+//      if (!scopedEntries.getDefaultEntries().isEmpty()) {
+//        AclEntry defaultEntryKey = new AclEntry.Builder().setScope(DEFAULT)
+//          .setType(type).build();
+//        if (Collections.binarySearch(scopedEntries.getDefaultEntries(),
+//            defaultEntryKey, ACL_ENTRY_COMPARATOR) < 0) {
+//          throw new AclException(
+//            "Invalid default ACL: the user, group and other entries are required.");
+//        }
+//      }
+//    }
     return Collections.unmodifiableList(aclBuilder);
   }
 

@@ -18,6 +18,8 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
 import io.hops.metadata.hdfs.entity.ProjectedINode;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -245,12 +247,17 @@ class FSPermissionChecker {
       return;
     }
     FsPermission mode = inode.getFsPermission();
-    InodeAcl aclFeature = inode.getInodeAcl();
-    if (aclFeature != null) {
-      List<AclEntry> featureEntries = aclFeature.getEntries();
+    List<AclEntry> featureEntries = AclStorage.readINodeAcl(inode);
+    if (!featureEntries.isEmpty()) {
+      List<AclEntry> withFakeGroupAndUserEntry = new ArrayList<>();
+      withFakeGroupAndUserEntry.add(new AclEntry.Builder().setName(inode.getUserName()).setScope(AclEntryScope.ACCESS)
+          .setPermission(mode.getUserAction()).setType(AclEntryType.USER).build());
+      withFakeGroupAndUserEntry.add(new AclEntry.Builder().setName(inode.getGroupName()).setScope(AclEntryScope.ACCESS)
+          .setPermission(mode.getGroupAction()).setType(AclEntryType.GROUP).build());
+      withFakeGroupAndUserEntry.addAll(featureEntries);
       // It's possible that the inode has a default ACL but no access ACL.
-      if (featureEntries.get(0).getScope() == AclEntryScope.ACCESS) {
-        checkAccessAcl(inode, access, mode, featureEntries);
+      if (withFakeGroupAndUserEntry.get(0).getScope() == AclEntryScope.ACCESS) {
+        checkAccessAcl(inode, access, mode, withFakeGroupAndUserEntry);
         return;
       }
     }
@@ -261,7 +268,7 @@ class FSPermissionChecker {
   /**
    * Checks requested access against an Access Control List.  This method relies
    * on finding the ACL data in the relevant portions of {@link FsPermission} and
-   * {@link InodeAcl} as implemented in the logic of {@link AclStorage}.  This
+   * {@link AclFeature} as implemented in the logic of {@link AclStorage}.  This
    * method also relies on receiving the ACL entries in sorted order.  This is
    * assumed to be true, because the ACL modification methods in
    * {@link AclTransformation} sort the resulting entries.
@@ -277,7 +284,7 @@ class FSPermissionChecker {
    * @param inode INode accessed inode
    * @param access FsAction requested permission
    * @param mode FsPermission mode from inode
-   * @param featureEntries List<AclEntry> ACL entries from InodeAcl of inode
+   * @param featureEntries List<AclEntry> ACL entries from AclFeature of inode
    * @throws AccessControlException if the ACL denies permission
    */
   private void checkAccessAcl(INode inode, FsAction access,

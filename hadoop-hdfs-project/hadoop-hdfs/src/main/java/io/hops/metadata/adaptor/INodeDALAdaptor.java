@@ -231,6 +231,9 @@ public class INodeDALAdaptor
       hopINode.setSubtreeLockOwner(inode.getSubtreeLockOwner());
     }
     hopINode.setHeader(inode.getHeader());
+    hopINode.setHasMoreAces(inode.hasMoreAces());
+    hopINode.setAce1Id(inode.getAce1Id());
+    hopINode.setAce2Id(inode.getAce2Id());
     return hopINode;
   }
 
@@ -291,6 +294,9 @@ public class INodeDALAdaptor
         inode.setHeaderNoPersistance(hopINode.getHeader());
         inode.setPartitionIdNoPersistance(hopINode.getPartitionId());
         inode.setLogicalTimeNoPersistance(hopINode.getLogicalTime());
+        inode.setHasMoreAcesNoPersistence(hopINode.hasMoreAces());
+        inode.setAce1IdNoPersistence(hopINode.getAce1Id());
+        inode.setAce2IdNoPersistence(hopINode.getAce2Id());
     }
     return inode;
     }catch (IOException ex){

@@ -43,6 +43,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileSystem.Statistics;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.hdfs.protocol.DatanodeID;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
@@ -282,6 +283,35 @@ public class DFSTestUtil {
     } finally {
       IOUtils.closeStream(out);
     }
+  }
+  
+  public static void createFile(FileSystem fs, FsPermission permission, Path fileName, long fileLen, short replFactor,
+      long seed) throws IOException {
+    if (!fs.mkdirs(fileName.getParent())) {
+      throw new IOException(
+          "Mkdirs failed to create " + fileName.getParent().toString());
+    }
+    FSDataOutputStream out = null;
+    try {
+      out = fs.create(fileName, replFactor);
+      fs.setPermission(fileName, permission);
+      byte[] toWrite = new byte[1024];
+      Random rb = new Random(seed);
+      long bytesToWrite = fileLen;
+      while (bytesToWrite > 0) {
+        rb.nextBytes(toWrite);
+        int bytesToWriteNext =
+            (1024 < bytesToWrite) ? 1024 : (int) bytesToWrite;
+      
+        out.write(toWrite, 0, bytesToWriteNext);
+        bytesToWrite -= bytesToWriteNext;
+      }
+      out.close();
+      out = null;
+    } finally {
+      IOUtils.closeStream(out);
+    }
+    
   }
   
   /**

@@ -33,7 +33,6 @@ import io.hops.metadata.HdfsStorageFactory;
 import io.hops.metadata.HdfsVariables;
 import io.hops.metadata.hdfs.dal.BlockChecksumDataAccess;
 import io.hops.metadata.hdfs.dal.EncodingStatusDataAccess;
-import io.hops.metadata.hdfs.dal.INodeAttributesDataAccess;
 import io.hops.metadata.hdfs.dal.INodeDataAccess;
 import io.hops.metadata.hdfs.dal.SafeBlocksDataAccess;
 import io.hops.metadata.hdfs.entity.BlockChecksum;
@@ -7545,9 +7544,28 @@ public class FSNamesystem
       }
     }.handle();
   }
-
-  void modifyAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
-//    aclConfigFlag.checkForApiCall();
+  
+  void modifyAclEntries(final String src, final List<AclEntry> aclSpec) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    new HopsTransactionalRequestHandler(HDFSOperationType.MODIFY_INODE_ACL) {
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(false, nameNode, INodeLockType.WRITE,
+            INodeResolveType.PATH, src));
+      }
+      
+      @Override
+      public Object performTask() throws IOException {
+        FSPermissionChecker pc = getPermissionChecker();
+        if (isPermissionEnabled) {
+          checkPathAccess(pc, src, FsAction.WRITE);
+        }
+        dir.modifyAclEntries(src, aclSpec);
+        return null;
+      }
+    }.handle();
+    //    aclConfigFlag.checkForApiCall();
 //    HdfsFileStatus resultingStat = null;
 //    FSPermissionChecker pc = getPermissionChecker();
 //    checkOperation(OperationCategory.WRITE);
@@ -7567,8 +7585,26 @@ public class FSNamesystem
 //    logAuditEvent(true, "modifyAclEntries", src, null, resultingStat);
   }
 
-  void removeAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
-//    aclConfigFlag.checkForApiCall();
+  void removeAclEntries(final String src, final List<AclEntry> aclSpec) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    new HopsTransactionalRequestHandler(HDFSOperationType.REMOVE_INODE_ACES) {
+  
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(nameNode, INodeLockType.WRITE,
+            INodeResolveType.PATH, src));
+      }
+      @Override
+      public Object performTask() throws IOException {
+        FSPermissionChecker pc = getPermissionChecker();
+        if (isPermissionEnabled) {
+          checkPathAccess(pc, src, FsAction.WRITE);
+        }
+        dir.removeAclEntries(src, aclSpec);
+        return null;
+      }
+    }.handle();
 //    HdfsFileStatus resultingStat = null;
 //    FSPermissionChecker pc = getPermissionChecker();
 //    checkOperation(OperationCategory.WRITE);
@@ -7588,8 +7624,27 @@ public class FSNamesystem
 //    logAuditEvent(true, "removeAclEntries", src, null, resultingStat);
   }
 
-  void removeDefaultAcl(String src) throws IOException {
-//    aclConfigFlag.checkForApiCall();
+  void removeDefaultAcl(final String src) throws IOException {
+    
+    aclConfigFlag.checkForApiCall();
+    new HopsTransactionalRequestHandler(HDFSOperationType.REMOVE_INODE_DEFAULT_ACL_ENTRIES) {
+    
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(nameNode, INodeLockType.WRITE,
+            INodeResolveType.PATH, src));
+      }
+      @Override
+      public Object performTask() throws IOException {
+        FSPermissionChecker pc = getPermissionChecker();
+        if (isPermissionEnabled) {
+          checkPathAccess(pc, src, FsAction.WRITE);
+        }
+        dir.removeDefaultAcl(src);
+        return null;
+      }
+    }.handle();
 //    HdfsFileStatus resultingStat = null;
 //    FSPermissionChecker pc = getPermissionChecker();
 //    checkOperation(OperationCategory.WRITE);
@@ -7600,7 +7655,7 @@ public class FSNamesystem
 //      checkNameNodeSafeMode("Cannot remove default ACL entries on " + src);
 //      src = FSDirectory.resolvePath(src, pathComponents, dir);
 //      checkOwner(pc, src);
-//      dir.removeDefaultAcl(src);
+      //dir.removeDefaultAcl(src);
 //      resultingStat = getAuditFileInfo(src, false);
 //    } finally {
 //      writeUnlock();
@@ -7609,9 +7664,27 @@ public class FSNamesystem
 //    logAuditEvent(true, "removeDefaultAcl", src, null, resultingStat);
   }
 
-  void removeAcl(String src) throws IOException {
-//    aclConfigFlag.checkForApiCall();
-//    HdfsFileStatus resultingStat = null;
+  void removeAcl(final String src) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    new HopsTransactionalRequestHandler(HDFSOperationType.REMOVE_INODE_ACL) {
+    
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(nameNode, INodeLockType.WRITE,
+            INodeResolveType.PATH, src));
+      }
+      @Override
+      public Object performTask() throws IOException {
+        FSPermissionChecker pc = getPermissionChecker();
+        if (isPermissionEnabled) {
+          checkPathAccess(pc, src, FsAction.WRITE);
+        }
+        dir.removeAcl(src);
+        return null;
+      }
+    }.handle();
+    //    HdfsFileStatus resultingStat = null;
 //    FSPermissionChecker pc = getPermissionChecker();
 //    checkOperation(OperationCategory.WRITE);
 //    byte[][] pathComponents = FSDirectory.getPathComponentsForReservedPath(src);
@@ -7630,8 +7703,26 @@ public class FSNamesystem
 //    logAuditEvent(true, "removeAcl", src, null, resultingStat);
   }
 
-  void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
-//    aclConfigFlag.checkForApiCall();
+  void setAcl(final String src, final List<AclEntry> aclSpec) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    new HopsTransactionalRequestHandler(HDFSOperationType.SET_INODE_ACL) {
+    
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(nameNode, INodeLockType.WRITE,
+            INodeResolveType.PATH, src));
+      }
+      @Override
+      public Object performTask() throws IOException {
+        FSPermissionChecker pc = getPermissionChecker();
+        if (isPermissionEnabled) {
+          checkPathAccess(pc, src, FsAction.WRITE);
+        }
+        dir.setAcl(src, aclSpec);
+        return null;
+      }
+    }.handle();
 //    HdfsFileStatus resultingStat = null;
 //    FSPermissionChecker pc = getPermissionChecker();
 //    checkOperation(OperationCategory.WRITE);
@@ -7651,8 +7742,25 @@ public class FSNamesystem
 //    logAuditEvent(true, "setAcl", src, null, resultingStat);
   }
 
-  AclStatus getAclStatus(String src) throws IOException {
-//    aclConfigFlag.checkForApiCall();
+  AclStatus getAclStatus(final String src) throws IOException {
+    aclConfigFlag.checkForApiCall();
+    return (AclStatus) new HopsTransactionalRequestHandler(HDFSOperationType.GET_INODE_ACL) {
+    
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(nameNode, INodeLockType.WRITE,
+            INodeResolveType.PATH, src));
+      }
+      @Override
+      public Object performTask() throws IOException {
+        FSPermissionChecker pc = getPermissionChecker();
+        if (isPermissionEnabled) {
+          checkPathAccess(pc, src, FsAction.WRITE);
+        }
+        return dir.getAclStatus(src);
+      }
+    }.handle();
 //    checkOperation(OperationCategory.READ);
 //    readLock();
 //    try {
@@ -7661,7 +7769,6 @@ public class FSNamesystem
 //    } finally {
 //      readUnlock();
 //    }
-    return null;
   }
 
   /**

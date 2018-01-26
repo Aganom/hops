@@ -42,6 +42,8 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclEntryScope;
+import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
@@ -69,6 +71,7 @@ import org.apache.hadoop.hdfs.server.common.HdfsServerConstants.BlockUCState;
 import org.apache.hadoop.hdfs.util.ByteArray;
 import org.apache.hadoop.security.AccessControlException;
 
+import javax.management.RuntimeMBeanException;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -1334,8 +1337,7 @@ public class FSDirectory implements Closeable {
    * @return the number of inodes deleted; 0 if no inodes are deleted.
    */
   int unprotectedDelete(String src, List<Block> collectedBlocks, long mtime)
-      throws UnresolvedLinkException, StorageException,
-      TransactionContextException {
+      throws IOException {
     src = normalizePath(src);
 
     INode[] inodes = getRootDir().getExistingPathINodes(src, false);
@@ -1365,6 +1367,9 @@ public class FSDirectory implements Closeable {
     if (targetNode == null) {
       return 0;
     }
+    
+    //Delete aces
+    INodeAcls.removeInodeAcl(targetNode.getId());
     // set the parent's modification time
     inodes[pos - 1].setModificationTime(mtime);
 
@@ -2096,7 +2101,7 @@ public class FSDirectory implements Closeable {
     T inode = null;
     try {
       inode = addChild(pathComponents, pos, child, childDiskspace, false);
-      AclStorage.copyINodeDefaultAcl(child);
+      //AclStorage.copyINodeDefaultAcl(child);
     } catch (QuotaExceededException e) {
       NameNode.LOG.warn("FSDirectory.addChildNoQuotaCheck - unexpected", e);
     }
@@ -2704,148 +2709,93 @@ public class FSDirectory implements Closeable {
   }
 
   void modifyAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
-//    writeLock();
-//    try {
-//      List<AclEntry> newAcl = unprotectedModifyAclEntries(src, aclSpec);
-//      fsImage.getEditLog().logSetAcl(src, newAcl);
-//    } finally {
-//      writeUnlock();
-//    }
-  }
-
-  private List<AclEntry> unprotectedModifyAclEntries(String src,
-      List<AclEntry> aclSpec) throws IOException {
-//    assert hasWriteLock();
-//    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
-//    INode inode = resolveLastINode(src, iip);
-//    int snapshotId = iip.getLatestSnapshotId();
-//    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
-//    List<AclEntry> newAcl = AclTransformation.mergeAclEntries(existingAcl,
-//      aclSpec);
-//    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
-//    return newAcl;
-    return null;
+    INode inode = getINode(src);
+    checkAllowedAclEntries(inode, aclSpec);
+    
+    List<AclEntry> existingAcl = AclStorage.readINodeAcl(inode); //TODO could be logical?
+    List<AclEntry> newAcl = AclTransformation.mergeAclEntries(existingAcl, aclSpec);
+    AclStorage.updateINodeAcl(inode, newAcl);
   }
 
   void removeAclEntries(String src, List<AclEntry> aclSpec) throws IOException {
-//    writeLock();
-//    try {
-//      List<AclEntry> newAcl = unprotectedRemoveAclEntries(src, aclSpec);
-//      fsImage.getEditLog().logSetAcl(src, newAcl);
-//    } finally {
-//      writeUnlock();
-//    }
-  }
-
-  private List<AclEntry> unprotectedRemoveAclEntries(String src,
-      List<AclEntry> aclSpec) throws IOException {
-//    assert hasWriteLock();
-//    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
-//    INode inode = resolveLastINode(src, iip);
-//    int snapshotId = iip.getLatestSnapshotId();
-//    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
-//    List<AclEntry> newAcl = AclTransformation.filterAclEntriesByAclSpec(
-//      existingAcl, aclSpec);
-//    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
-//    return newAcl;
-    return null;
+    INode inode = getINode(src);
+    checkAllowedAclEntries(inode, aclSpec);
+    List<AclEntry> existingAcl = AclStorage.readINodeAcl(inode); //TODO could be logical?
+    List<AclEntry> newAcl = AclTransformation.filterAclEntriesByAclSpec(
+      existingAcl, aclSpec);
+    AclStorage.updateINodeAcl(inode, newAcl);
   }
 
   void removeDefaultAcl(String src) throws IOException {
-//    writeLock();
-//    try {
-//      List<AclEntry> newAcl = unprotectedRemoveDefaultAcl(src);
-//      fsImage.getEditLog().logSetAcl(src, newAcl);
-//    } finally {
-//      writeUnlock();
-//    }
-  }
-
-  private List<AclEntry> unprotectedRemoveDefaultAcl(String src)
-      throws IOException {
-//    assert hasWriteLock();
-//    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
-//    INode inode = resolveLastINode(src, iip);
-//    int snapshotId = iip.getLatestSnapshotId();
-//    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
-//    List<AclEntry> newAcl = AclTransformation.filterDefaultAclEntries(
-//      existingAcl);
-//    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
-//    return newAcl;
-    return null;
+    INode inode = getINode(src);;
+    if (inode == null) {
+      throw new FileNotFoundException("Path not found");
+    }
+    List<AclEntry> existingAcl = AclStorage.readINodeAcl(inode); //TODO could be logical?
+    List<AclEntry> newAcl = AclTransformation.filterDefaultAclEntries(
+      existingAcl);
+    AclStorage.updateINodeAcl(inode, newAcl);
   }
 
   void removeAcl(String src) throws IOException {
-//    writeLock();
-//    try {
-//      unprotectedRemoveAcl(src);
-//      fsImage.getEditLog().logSetAcl(src, AclFeature.EMPTY_ENTRY_LIST);
-//    } finally {
-//      writeUnlock();
-//    }
-  }
-
-  private void unprotectedRemoveAcl(String src) throws IOException {
-//    assert hasWriteLock();
-//    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
-//    INode inode = resolveLastINode(src, iip);
-//    int snapshotId = iip.getLatestSnapshotId();
-//    AclStorage.removeINodeAcl(inode, snapshotId);
+    INode inode = getINode(src);
+    if (inode == null) {
+      throw new FileNotFoundException("Path not found");
+    }
+    AclStorage.removeINodeAcl(inode);
   }
 
   void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
-//    writeLock();
-//    try {
-//      List<AclEntry> newAcl = unprotectedSetAcl(src, aclSpec);
-//      fsImage.getEditLog().logSetAcl(src, newAcl);
-//    } finally {
-//      writeUnlock();
-//    }
+    INode inode = getINode(src);
+    checkAllowedAclEntries(inode, aclSpec);
+    
+    
+    if (aclSpec.isEmpty()) {
+      removeAcl(src);
+      return;
+    }
+    
+    AclStorage.updateINodeAcl(inode, aclSpec);
   }
-
-  List<AclEntry> unprotectedSetAcl(String src, List<AclEntry> aclSpec)
-      throws IOException {
-    // ACL removal is logged to edits as OP_SET_ACL with an empty list.
-//    if (aclSpec.isEmpty()) {
-//      unprotectedRemoveAcl(src);
-//      return AclFeature.EMPTY_ENTRY_LIST;
-//    }
-//
-//    assert hasWriteLock();
-//    INodesInPath iip = rootDir.getINodesInPath4Write(normalizePath(src), true);
-//    INode inode = resolveLastINode(src, iip);
-//    int snapshotId = iip.getLatestSnapshotId();
-//    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
-//    List<AclEntry> newAcl = AclTransformation.replaceAclEntries(existingAcl,
-//      aclSpec);
-//    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
-//    return newAcl;
-    return null;
+  
+  private void checkAllowedAclEntries(INode inode, List<AclEntry> toCheck) throws IOException {
+    if (inode == null){
+      throw new FileNotFoundException("Path not found");
+    }
+    for (AclEntry aclEntry : toCheck) {
+      if (aclEntry.getType().equals(AclEntryType.MASK)){
+        throw new AclException("Hops does not support MASK ACL entries.");
+      }
+      
+      if (aclEntry.getName() == null || aclEntry.getName().isEmpty()) {
+        throw new AclException("Hops does not support unnamed ACL entries.");
+      } else {
+        if (aclEntry.getType().equals(AclEntryType.USER) && aclEntry.getName().equals(inode.getUserName())){
+          throw new AclException("Hops does not support named acl entries that override standard owner/group");
+        }
+        if (aclEntry.getType().equals(AclEntryType.GROUP) && aclEntry.getName().equals(inode.getGroupName())){
+          throw new AclException("Hops does not support named acl entries that override standard owner/group");
+        }
+      }
+    }
   }
 
   AclStatus getAclStatus(String src) throws IOException {
-//    String srcs = normalizePath(src);
-//    readLock();
-//    try {
-//      // There is no real inode for the path ending in ".snapshot", so return a
-//      // non-null, unpopulated AclStatus.  This is similar to getFileInfo.
-//      if (srcs.endsWith(HdfsConstants.SEPARATOR_DOT_SNAPSHOT_DIR) &&
-//          getINode4DotSnapshot(srcs) != null) {
-//        return new AclStatus.Builder().owner("").group("").build();
-//      }
-//      INodesInPath iip = rootDir.getLastINodeInPath(srcs, true);
-//      INode inode = resolveLastINode(src, iip);
-//      int snapshotId = iip.getPathSnapshotId();
-//      List<AclEntry> acl = AclStorage.readINodeAcl(inode, snapshotId);
-//      return new AclStatus.Builder()
-//          .owner(inode.getUserName()).group(inode.getGroupName())
-//          .stickyBit(inode.getFsPermission(snapshotId).getStickyBit())
-//          .addEntries(acl).build();
-//    } finally {
-//      readUnlock();
-//    }
-    return null;
+    String srcs = normalizePath(src);
+
+    INode inode = getINode(srcs);
+    if (inode == null) {
+      throw new FileNotFoundException("Path not found");
+    }
+
+    List<AclEntry> acl = AclStorage.readINodeAcl(inode);
+    return new AclStatus.Builder()
+        .owner(inode.getUserName()).group(inode.getGroupName())
+        .stickyBit(inode.getFsPermission().getStickyBit())
+        .addEntries(acl).build();
   }
+  
+  
 
   /**
    * Caches frequently used file names to reuse file name objects and

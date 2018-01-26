@@ -123,7 +123,7 @@ public final class AclUtil {
    * @return boolean true if the entries represent a minimal ACL
    */
   public static boolean isMinimalAcl(List<AclEntry> entries) {
-    return entries.size() == 3;
+    return false;//entries.size() == 3;
   }
 
   /**

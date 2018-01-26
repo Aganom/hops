@@ -56,6 +56,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.NamenodeSelector.NamenodeHandle;
 import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
+import org.apache.hadoop.hdfs.protocol.AclException;
 import org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException;
 import org.apache.hadoop.hdfs.protocol.ClientProtocol;
 import org.apache.hadoop.hdfs.protocol.CorruptFileBlocks;
@@ -2740,9 +2741,23 @@ public class DFSClient implements java.io.Closeable {
     }
   }
   
-  public void modifyAclEntries(String src, List<AclEntry> aclSpec)
+  public void modifyAclEntries(final String src, final List<AclEntry> aclSpec)
       throws IOException {
-//    checkOpen();
+    checkOpen();
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode)
+            throws RemoteException, IOException {
+          namenode.modifyAclEntries(src, aclSpec);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "modifyAclEntries");
+    } catch (RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+          FileNotFoundException.class, UnresolvedPathException.class, AclException.class);
+    }
 //    try (TraceScope ignored = newPathTraceScope("modifyAclEntries", src)) {
 //      namenode.modifyAclEntries(src, aclSpec);
 //    } catch (RemoteException re) {
@@ -2756,9 +2771,23 @@ public class DFSClient implements java.io.Closeable {
 //    }
   }
   
-  public void removeAclEntries(String src, List<AclEntry> aclSpec)
+  public void removeAclEntries(final String src, final List<AclEntry> aclSpec)
       throws IOException {
-//    checkOpen();
+    checkOpen();
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode)
+            throws RemoteException, IOException {
+          namenode.removeAclEntries(src, aclSpec);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "removeAclEntries");
+    } catch (RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+          FileNotFoundException.class, UnresolvedPathException.class, AclException.class);
+    }
 //    try (TraceScope ignored = tracer.newScope("removeAclEntries")) {
 //      namenode.removeAclEntries(src, aclSpec);
 //    } catch (RemoteException re) {
@@ -2772,7 +2801,22 @@ public class DFSClient implements java.io.Closeable {
 //    }
   }
   
-  public void removeDefaultAcl(String src) throws IOException {
+  public void removeDefaultAcl(final String src) throws IOException {
+    checkOpen();
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode)
+            throws RemoteException, IOException {
+          namenode.removeDefaultAcl(src);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "removeDefaultAcl");
+    } catch (RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+          FileNotFoundException.class, UnresolvedPathException.class, AclException.class);
+    }
 //    checkOpen();
 //    try (TraceScope ignored = tracer.newScope("removeDefaultAcl")) {
 //      namenode.removeDefaultAcl(src);
@@ -2787,7 +2831,22 @@ public class DFSClient implements java.io.Closeable {
 //    }
   }
   
-  public void removeAcl(String src) throws IOException {
+  public void removeAcl(final String src) throws IOException {
+    checkOpen();
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode)
+            throws RemoteException, IOException {
+          namenode.removeAcl(src);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "removeAcl");
+    } catch (RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+          FileNotFoundException.class, UnresolvedPathException.class, AclException.class);
+    }
 //    checkOpen();
 //    try (TraceScope ignored = tracer.newScope("removeAcl")) {
 //      namenode.removeAcl(src);
@@ -2802,7 +2861,22 @@ public class DFSClient implements java.io.Closeable {
 //    }
   }
   
-  public void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+  public void setAcl(final String src, final List<AclEntry> aclSpec) throws IOException {
+    checkOpen();
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode)
+            throws RemoteException, IOException {
+          namenode.setAcl(src, aclSpec);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "setAcl");
+    } catch (RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+          FileNotFoundException.class, UnresolvedPathException.class, AclException.class);
+    }
 //    checkOpen();
 //    try (TraceScope ignored = tracer.newScope("setAcl")) {
 //      namenode.setAcl(src, aclSpec);
@@ -2817,7 +2891,21 @@ public class DFSClient implements java.io.Closeable {
 //    }
   }
   
-  public AclStatus getAclStatus(String src) throws IOException {
+  public AclStatus getAclStatus(final String src) throws IOException {
+    checkOpen();
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode)
+            throws RemoteException, IOException {
+          return namenode.getAclStatus(src);
+        }
+      };
+      return (AclStatus) doClientActionWithRetry(handler, "getAclStatus");
+    } catch (RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+          FileNotFoundException.class, UnresolvedPathException.class, AclException.class);
+    }
 //    checkOpen();
 //    try (TraceScope ignored = newPathTraceScope("getAclStatus", src)) {
 //      return namenode.getAclStatus(src);
@@ -2827,7 +2915,6 @@ public class DFSClient implements java.io.Closeable {
 //          FileNotFoundException.class,
 //          UnresolvedPathException.class);
 //    }
-    return null;
   }
 
   @Override

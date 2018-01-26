@@ -53,18 +53,18 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rw-</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>
@@ -89,18 +89,18 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>
@@ -126,26 +126,26 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rw-</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:bob:r--</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>
@@ -171,30 +171,30 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rw-</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:bob:r--</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>group:users:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>
@@ -221,22 +221,22 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rw-</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:charlie:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>RegexpAcrossOutputComparator</type>
           <expected-output>.*(?!bob)*</expected-output>
@@ -267,54 +267,54 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:bob:r--</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>group:users:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:user::rwx</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:user::rwx</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>default:user:charlie:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>default:group:admin:rwx</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:mask::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:mask::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:other::r-x</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>
@@ -358,50 +358,50 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:bob:r--</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>group:users:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:user::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:user::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>default:group:admin:rwx</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:mask::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:mask::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:other::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>RegexpAcrossOutputComparator</type>
           <expected-output>.*(?!default:user:charlie).*</expected-output>
@@ -433,30 +433,30 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:bob:r--</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>group:users:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>RegexpAcrossOutputComparator</type>
           <expected-output>.*(?!default).*</expected-output>
@@ -487,18 +487,18 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>RegexpAcrossOutputComparator</type>
           <expected-output>.*(?!charlie).*</expected-output>
@@ -537,18 +537,18 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rw-</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>RegexpAcrossOutputComparator</type>
           <expected-output>.*(?!charlie).*</expected-output>
@@ -583,30 +583,30 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rw-</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:charlie:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>group:admin:rwx</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r&#45;&#45;</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>RegexpAcrossOutputComparator</type>
           <expected-output>.*(?!default).*</expected-output>
@@ -637,54 +637,54 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>user:charlie:r-x</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>group:admin:rwx</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>mask::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:user::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:user:charlie:r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:group::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:group:admin:rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:mask::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:other::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>mask::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:user::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:user:charlie:r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:group::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:group:admin:rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:mask::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:other::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>
@@ -783,38 +783,38 @@
           <type>SubstringComparator</type>
           <expected-output># group: supergroup</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:user::rwx</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>user::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>group::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>other::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:user::rwx</expected-output>-->
+        <!--</comparator>-->
         <comparator>
           <type>SubstringComparator</type>
           <expected-output>default:user:charlie:rwx</expected-output>
         </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:group::r-x</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:mask::rwx</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>default:other::r-x</expected-output>
-        </comparator>
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:group::r-x</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:mask::rwx</expected-output>-->
+        <!--</comparator>-->
+        <!--<comparator>-->
+          <!--<type>SubstringComparator</type>-->
+          <!--<expected-output>default:other::r-x</expected-output>-->
+        <!--</comparator>-->
       </comparators>
     </test>
     <test>

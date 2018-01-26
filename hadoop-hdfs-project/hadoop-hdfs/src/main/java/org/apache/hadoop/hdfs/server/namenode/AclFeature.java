@@ -28,12 +28,12 @@ import org.apache.hadoop.fs.permission.AclEntry;
  * Feature that represents the ACLs of the inode.
  */
 @InterfaceAudience.Private
-public class InodeAcl {
+public class AclFeature {
   public static final List<AclEntry> EMPTY_ENTRY_LIST = Collections.emptyList();
 
   private final List<AclEntry> entries;
 
-  public InodeAcl(List<AclEntry> entries) {
+  public AclFeature(List<AclEntry> entries) {
     this.entries = entries;
   }
 

@@ -30,6 +30,8 @@ import io.hops.transaction.EntityManager;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclEntryScope;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
@@ -44,6 +46,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static io.hops.metadata.hdfs.entity.Ace.NON_EXISTING_ACE_ID;
+import static org.apache.hadoop.hdfs.server.namenode.INodeDirectory.ROOT_ID;
 
 /**
  * We keep an in-memory representation of the file/block hierarchy.
@@ -137,7 +142,11 @@ public abstract class INode implements Comparable<byte[]> {
 
   protected boolean subtreeLocked;
   protected long subtreeLockOwner;
-
+  
+  //Used by AclStorage to cache ace references
+  private boolean hasMoreAces = false;
+  private int ace1Id = NON_EXISTING_ACE_ID;
+  private int ace2Id = NON_EXISTING_ACE_ID;
 
   //Number of bits for Block size
   final static short BLOCK_BITS = 48;
@@ -220,19 +229,6 @@ public abstract class INode implements Comparable<byte[]> {
     this.parentId = other.getParentId();
     this.id = other.getId();
   }
-
-  protected InodeAcl getInodeAcl(){
-    return null;
-  }
-  
-  protected void addInodeAcl(InodeAcl toAdd){
-  
-  }
-  
-  protected void removeInodeAcl(){
-  
-  }
-  
   /**
    * Check whether this is the root inode.
    */
@@ -326,7 +322,52 @@ public abstract class INode implements Comparable<byte[]> {
   private void setPermissionNoPersistance(FsPermission permission) {
     this.permission = permission;
   }
-
+  
+  public boolean hasMoreAces() {
+    return hasMoreAces;
+  }
+  
+  void setHasMoreAces(boolean hasMoreAces) throws TransactionContextException, StorageException {
+    setHasMoreAcesNoPersistence(hasMoreAces);
+    save();
+  }
+  public void setHasMoreAcesNoPersistence(boolean hasMoreAces) {
+    this.hasMoreAces = hasMoreAces;
+  }
+  
+  
+  public int getAce1Id() {
+    return ace1Id;
+  }
+  
+  void setAce1Id(int ace1Id) throws TransactionContextException, StorageException {
+    setAce1IdNoPersistence(ace1Id);
+    save();
+  }
+  
+  public void setAce1IdNoPersistence(int ace1Id) {
+    this.ace1Id = ace1Id;
+  }
+  
+  public int getAce2Id() {
+    return ace2Id;
+  }
+  
+  void setAce2Id(int ace2Id) throws TransactionContextException, StorageException {
+    setAce2IdNoPersistence(ace2Id);
+    save();
+  }
+  public void setAce2IdNoPersistence(int ace2Id) {
+    this.ace2Id = ace2Id;
+  }
+  
+  void setAces(int ace1Id, int ace2Id, boolean hasMoreAces) throws TransactionContextException, StorageException {
+    setAce1IdNoPersistence(ace1Id);
+    setAce2IdNoPersistence(ace2Id);
+    setHasMoreAcesNoPersistence(hasMoreAces);
+    save();
+  }
+  
   /**
    * Check whether it's a directory
    */
@@ -956,7 +997,7 @@ public abstract class INode implements Comparable<byte[]> {
       throw new IllegalStateException("INode is not connected to the file system tree yet");
     }
 
-    if(id == INodeDirectory.ROOT_ID){
+    if(id == ROOT_ID){
       return INodeDirectory.ROOT_DIR_DEPTH;
     }
 
