@@ -60,20 +60,20 @@ class FSPermissionChecker {
   static final Log LOG = LogFactory.getLog(UserGroupInformation.class);
 
   /** @return a string for throwing {@link AccessControlException} */
-  private String toAccessControlString(INode inode, int snapshotId,
-      FsAction access, FsPermission mode) {
-    return toAccessControlString(inode, snapshotId, access, mode, null);
+  private String toAccessControlString(INode inode,
+      FsAction access, FsPermission mode) throws IOException {
+    return toAccessControlString(inode, access, mode, null);
   }
 
   /** @return a string for throwing {@link AccessControlException} */
-  private String toAccessControlString(INode inode, int snapshotId,
-      FsAction access, FsPermission mode, List<AclEntry> featureEntries) {
+  private String toAccessControlString(INode inode,
+      FsAction access, FsPermission mode, List<AclEntry> featureEntries) throws IOException {
     StringBuilder sb = new StringBuilder("Permission denied: ")
       .append("user=").append(user).append(", ")
       .append("access=").append(access).append(", ")
       .append("inode=\"").append(inode.getFullPathName()).append("\":")
-      .append(inode.getUserName(snapshotId)).append(':')
-      .append(inode.getGroupName(snapshotId)).append(':')
+      .append(inode.getUserName()).append(':')
+      .append(inode.getGroupName()).append(':')
       .append(inode.isDirectory() ? 'd' : '-')
       .append(mode);
     if (featureEntries != null) {
@@ -101,6 +101,14 @@ class FSPermissionChecker {
     groups = Collections.unmodifiableSet(s);
     user = ugi.getShortUserName();
     isSuper = user.equals(fsOwner) || groups.contains(supergroup);
+  }
+  
+  FSPermissionChecker(String fsOwner, String superGroup, UserGroupInformation callerUgi){
+    ugi = callerUgi;
+    HashSet<String> s = new HashSet<>(Arrays.asList(ugi.getGroupNames()));
+    groups = Collections.unmodifiableSet(s);
+    user = ugi.getShortUserName();
+    isSuper = user.equals(fsOwner) || groups.contains(superGroup);
   }
 
   /**
@@ -268,34 +276,35 @@ class FSPermissionChecker {
       return;
     }
     FsPermission mode = inode.getFsPermission();
-    check(inode.getId(), access, mode, inode.getUserName(),
-        inode.getGroupName());
-    FsPermission mode = inode.getFsPermission(snapshotId);
-    AclFeature aclFeature = inode.getAclFeature(snapshotId);
+  
+    AclFeature aclFeature = inode.getAclFeature();//snapshotId);
     if (aclFeature != null) {
       List<AclEntry> featureEntries = aclFeature.getEntries();
       // It's possible that the inode has a default ACL but no access ACL.
       if (featureEntries.get(0).getScope() == AclEntryScope.ACCESS) {
-        checkAccessAcl(inode, snapshotId, access, mode, featureEntries);
+        checkAccessAcl(inode, access, mode, featureEntries);
         return;
       }
     }
-    checkFsPermission(inode, snapshotId, access, mode);
+    checkFsPermission(inode, access, mode); //TODO maybe remove this call
+    
+    check(inode.getId(), access, mode, inode.getUserName(),
+        inode.getGroupName());
+    
   }
 
-  private void checkFsPermission(INode inode, int snapshotId, FsAction access,
-      FsPermission mode) throws AccessControlException {
-    if (user.equals(inode.getUserName(snapshotId))) { //user class
+  private void checkFsPermission(INode inode, FsAction access,
+      FsPermission mode) throws IOException {
+    if (user.equals(inode.getUserName())) { //user class
       if (mode.getUserAction().implies(access)) { return; }
     }
-    else if (groups.contains(inode.getGroupName(snapshotId))) { //group class
+    else if (groups.contains(inode.getGroupName())) { //group class
       if (mode.getGroupAction().implies(access)) { return; }
     }
     else { //other class
       if (mode.getOtherAction().implies(access)) { return; }
     }
-    throw new AccessControlException(
-      toAccessControlString(inode, snapshotId, access, mode));
+    throw new AccessControlException(toAccessControlString(inode, access, mode));
   }
 
   /**
@@ -315,19 +324,18 @@ class FSPermissionChecker {
    * - Default entries may be present, but they are ignored during enforcement.
    *
    * @param inode INode accessed inode
-   * @param snapshotId int snapshot ID
    * @param access FsAction requested permission
    * @param mode FsPermission mode from inode
    * @param featureEntries List<AclEntry> ACL entries from AclFeature of inode
    * @throws AccessControlException if the ACL denies permission
    */
-  private void checkAccessAcl(INode inode, int snapshotId, FsAction access,
+  private void checkAccessAcl(INode inode, FsAction access,
       FsPermission mode, List<AclEntry> featureEntries)
-      throws AccessControlException {
+      throws IOException {
     boolean foundMatch = false;
 
     // Use owner entry from permission bits if user is owner.
-    if (user.equals(inode.getUserName(snapshotId))) {
+    if (user.equals(inode.getUserName())) {
       if (mode.getUserAction().implies(access)) {
         return;
       }
@@ -357,7 +365,7 @@ class FSPermissionChecker {
           // applied if user is a member and entry grants access.  If user is a
           // member of multiple groups that have entries that grant access, then
           // it doesn't matter which is chosen, so exit early after first match.
-          String group = name == null ? inode.getGroupName(snapshotId) : name;
+          String group = name == null ? inode.getGroupName() : name;
           if (groups.contains(group)) {
             FsAction masked = entry.getPermission().and(mode.getGroupAction());
             if (masked.implies(access)) {
@@ -375,7 +383,7 @@ class FSPermissionChecker {
     }
 
     throw new AccessControlException(
-      toAccessControlString(inode, snapshotId, access, mode, featureEntries));
+      toAccessControlString(inode, access, mode, featureEntries));
   }
 
   void check(ProjectedINode inode, FsAction access) throws IOException {

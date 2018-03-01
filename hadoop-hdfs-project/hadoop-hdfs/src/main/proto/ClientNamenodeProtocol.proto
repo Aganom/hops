@@ -578,21 +578,9 @@ message FlushUsersCacheRequestProto {
 message FlushUsersCacheResponseProto {
 }
 
-enum FsActionProto {
-  NONE          = 0x0;
-  EXECUTE       = 0x1;
-  WRITE         = 0x2;
-  WRITE_EXECUTE = 0x3;
-  READ          = 0x4;
-  READ_EXECUTE  = 0x5;
-  READ_WRITE    = 0x6;
-  PERM_ALL      = 0x7;
-}
-
-
 message CheckAccessRequestProto {
   required string path = 1;
-  required FsActionProto mode = 2;
+  required AclEntryProto.FsActionProto mode = 2;
 }
 
 message CheckAccessResponseProto { // void response

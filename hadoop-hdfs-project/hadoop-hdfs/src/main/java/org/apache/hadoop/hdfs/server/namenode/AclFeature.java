@@ -28,7 +28,7 @@ import org.apache.hadoop.fs.permission.AclEntry;
  * Feature that represents the ACLs of the inode.
  */
 @InterfaceAudience.Private
-public class AclFeature implements INode.Feature {
+public class AclFeature {//implements INode.Feature {
   public static final List<AclEntry> EMPTY_ENTRY_LIST = Collections.emptyList();
 
   private final List<AclEntry> entries;

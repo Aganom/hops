@@ -59,13 +59,31 @@ import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.apache.hadoop.hdfs.protocol.AlreadyBeingCreatedException;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.protocol.AclException;
+import org.apache.hadoop.hdfs.protocol.ClientProtocol;
+import org.apache.hadoop.hdfs.protocol.CorruptFileBlocks;
+import org.apache.hadoop.hdfs.protocol.DSQuotaExceededException;
+import org.apache.hadoop.hdfs.protocol.DatanodeID;
+import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
+import org.apache.hadoop.hdfs.protocol.DirectoryListing;
+import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
+import org.apache.hadoop.hdfs.protocol.HdfsBlocksMetadata;
+import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.DatanodeReportType;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants.SafeModeAction;
+import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
+import org.apache.hadoop.hdfs.protocol.LastUpdatedContentSummary;
+import org.apache.hadoop.hdfs.protocol.LocatedBlock;
+import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
+import org.apache.hadoop.hdfs.protocol.NSQuotaExceededException;
+import org.apache.hadoop.hdfs.protocol.UnresolvedPathException;
 import org.apache.hadoop.hdfs.protocol.datatransfer.DataTransferEncryptor;
 import org.apache.hadoop.hdfs.protocol.datatransfer.IOStreamPair;
 import org.apache.hadoop.hdfs.protocol.datatransfer.Op;
 import org.apache.hadoop.hdfs.protocol.datatransfer.ReplaceDatanodeOnFailure;
 import org.apache.hadoop.hdfs.protocol.datatransfer.Sender;
+import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.BlockOpResponseProto;
+import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.OpBlockChecksumResponseProto;
+import org.apache.hadoop.hdfs.protocol.proto.DataTransferProtos.Status;
 import org.apache.hadoop.hdfs.protocolPB.PBHelper;
 import org.apache.hadoop.hdfs.security.token.block.BlockTokenIdentifier;
 import org.apache.hadoop.hdfs.security.token.block.DataEncryptionKey;
@@ -3270,90 +3288,97 @@ public class DFSClient implements java.io.Closeable {
   void modifyAclEntries(String src, List<AclEntry> aclSpec)
           throws IOException {
     checkOpen();
-    try {
-      namenode.modifyAclEntries(src, aclSpec);
-    } catch(RemoteException re) {
-      throw re.unwrapRemoteException(AccessControlException.class,
-              AclException.class,
-              FileNotFoundException.class,
-              NSQuotaExceededException.class,
-              SafeModeException.class,
-              SnapshotAccessControlException.class,
-              UnresolvedPathException.class);
-    }
+    //TODO
+//    try {
+//      namenode.modifyAclEntries(src, aclSpec);
+//    } catch(RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//              AclException.class,
+//              FileNotFoundException.class,
+//              NSQuotaExceededException.class,
+//              SafeModeException.class,
+//              SnapshotAccessControlException.class,
+//              UnresolvedPathException.class);
+//    }
   }
 
   void removeAclEntries(String src, List<AclEntry> aclSpec)
           throws IOException {
     checkOpen();
-    try {
-      namenode.removeAclEntries(src, aclSpec);
-    } catch(RemoteException re) {
-      throw re.unwrapRemoteException(AccessControlException.class,
-              AclException.class,
-              FileNotFoundException.class,
-              NSQuotaExceededException.class,
-              SafeModeException.class,
-              SnapshotAccessControlException.class,
-              UnresolvedPathException.class);
-    }
+    //TODO
+//    try {
+//      namenode.removeAclEntries(src, aclSpec);
+//    } catch(RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//              AclException.class,
+//              FileNotFoundException.class,
+//              NSQuotaExceededException.class,
+//              SafeModeException.class,
+//              SnapshotAccessControlException.class,
+//              UnresolvedPathException.class);
+//    }
   }
 
   void removeDefaultAcl(String src) throws IOException {
     checkOpen();
-    try {
-      namenode.removeDefaultAcl(src);
-    } catch(RemoteException re) {
-      throw re.unwrapRemoteException(AccessControlException.class,
-              AclException.class,
-              FileNotFoundException.class,
-              NSQuotaExceededException.class,
-              SafeModeException.class,
-              SnapshotAccessControlException.class,
-              UnresolvedPathException.class);
-    }
+    //TODO
+//    try {
+//      namenode.removeDefaultAcl(src);
+//    } catch(RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//              AclException.class,
+//              FileNotFoundException.class,
+//              NSQuotaExceededException.class,
+//              SafeModeException.class,
+//              SnapshotAccessControlException.class,
+//              UnresolvedPathException.class);
+//    }
   }
 
   void removeAcl(String src) throws IOException {
     checkOpen();
-    try {
-      namenode.removeAcl(src);
-    } catch(RemoteException re) {
-      throw re.unwrapRemoteException(AccessControlException.class,
-              AclException.class,
-              FileNotFoundException.class,
-              NSQuotaExceededException.class,
-              SafeModeException.class,
-              SnapshotAccessControlException.class,
-              UnresolvedPathException.class);
-    }
+    //TODO
+//    try {
+//      namenode.removeAcl(src);
+//    } catch(RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//              AclException.class,
+//              FileNotFoundException.class,
+//              NSQuotaExceededException.class,
+//              SafeModeException.class,
+//              SnapshotAccessControlException.class,
+//              UnresolvedPathException.class);
+//    }
   }
 
   void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
     checkOpen();
-    try {
-      namenode.setAcl(src, aclSpec);
-    } catch(RemoteException re) {
-      throw re.unwrapRemoteException(AccessControlException.class,
-              AclException.class,
-              FileNotFoundException.class,
-              NSQuotaExceededException.class,
-              SafeModeException.class,
-              SnapshotAccessControlException.class,
-              UnresolvedPathException.class);
-    }
+    //TODO
+//    try {
+//      namenode.setAcl(src, aclSpec);
+//    } catch(RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//              AclException.class,
+//              FileNotFoundException.class,
+//              NSQuotaExceededException.class,
+//              SafeModeException.class,
+//              SnapshotAccessControlException.class,
+//              UnresolvedPathException.class);
+//    }
   }
 
   AclStatus getAclStatus(String src) throws IOException {
     checkOpen();
-    try {
-      return namenode.getAclStatus(src);
-    } catch(RemoteException re) {
-      throw re.unwrapRemoteException(AccessControlException.class,
-              AclException.class,
-              FileNotFoundException.class,
-              UnresolvedPathException.class);
-    }
+    //TODO
+//    try {
+//      return namenode.getAclStatus(src);
+//    } catch(RemoteException re) {
+//      throw re.unwrapRemoteException(AccessControlException.class,
+//              AclException.class,
+//              FileNotFoundException.class,
+//              UnresolvedPathException.class);
+//    }
+    return null;
   }
 
 

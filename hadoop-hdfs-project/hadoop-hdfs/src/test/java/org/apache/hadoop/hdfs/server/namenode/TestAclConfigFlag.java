@@ -181,7 +181,7 @@ public class TestAclConfigFlag {
     NameNode nameNode = cluster.getNameNode();
     if (checkpoint) {
       NameNodeAdapter.enterSafeMode(nameNode, false);
-      NameNodeAdapter.saveNamespace(nameNode);
+      //NameNodeAdapter.saveNamespace(nameNode);
     }
     shutdown();
     initCluster(false, aclsEnabled);

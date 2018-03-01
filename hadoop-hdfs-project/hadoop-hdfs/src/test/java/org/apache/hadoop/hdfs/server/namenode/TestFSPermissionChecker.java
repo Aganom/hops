@@ -30,12 +30,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.apache.hadoop.fs.permission.AclEntry;
-import org.apache.hadoop.fs.permission.AclEntryScope;
-import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
-import org.apache.hadoop.hdfs.server.namenode.snapshot.Snapshot;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -62,8 +59,8 @@ public class TestFSPermissionChecker {
   public void setUp() {
     PermissionStatus permStatus = PermissionStatus.createImmutable(SUPERUSER,
       SUPERGROUP, FsPermission.createImmutable((short)0755));
-    inodeRoot = new INodeDirectory(INodeId.ROOT_INODE_ID,
-      INodeDirectory.ROOT_NAME, permStatus, 0L);
+//    inodeRoot = new INodeDirectory(INodeId.ROOT_INODE_ID,
+//      INodeDirectory.ROOT_NAME, permStatus, 0L);
   }
 
   @Test
@@ -370,23 +367,22 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/file1", ALL);
   }
 
-  private void addAcl(INodeWithAdditionalFields inode, AclEntry... acl)
+  private void addAcl(INode inode, AclEntry... acl)
       throws IOException {
-    AclStorage.updateINodeAcl((INodeWithAdditionalFields)inode,
-      Arrays.asList(acl), Snapshot.CURRENT_STATE_ID);
+    AclStorage.updateINodeAcl(inode, Arrays.asList(acl));
   }
 
   private void assertPermissionGranted(UserGroupInformation user, String path,
       FsAction access) throws IOException {
     new FSPermissionChecker(SUPERUSER, SUPERGROUP, user).checkPermission(path,
-      inodeRoot, false, null, null, access, null, true);
+      inodeRoot, false, null, null, access, null);
   }
 
   private void assertPermissionDenied(UserGroupInformation user, String path,
       FsAction access) throws IOException {
     try {
       new FSPermissionChecker(SUPERUSER, SUPERGROUP, user).checkPermission(path,
-        inodeRoot, false, null, null, access, null, true);
+        inodeRoot, false, null, null, access, null);
       fail("expected AccessControlException for user + " + user + ", path = " +
         path + ", access = " + access);
     } catch (AccessControlException e) {
@@ -398,20 +394,22 @@ public class TestFSPermissionChecker {
       String name, String owner, String group, short perm) throws IOException {
     PermissionStatus permStatus = PermissionStatus.createImmutable(owner, group,
       FsPermission.createImmutable(perm));
-    INodeDirectory inodeDirectory = new INodeDirectory(
-      INodeId.GRANDFATHER_INODE_ID, name.getBytes("UTF-8"), permStatus, 0L);
-    parent.addChild(inodeDirectory);
-    return inodeDirectory;
+//    INodeDirectory inodeDirectory = new INodeDirectory(
+//      INodeId.GRANDFATHER_INODE_ID, name.getBytes("UTF-8"), permStatus, 0L);
+//    parent.addChild(inodeDirectory);
+//    return inodeDirectory;
+    return null;
   }
 
   private static INodeFile createINodeFile(INodeDirectory parent, String name,
       String owner, String group, short perm) throws IOException {
     PermissionStatus permStatus = PermissionStatus.createImmutable(owner, group,
       FsPermission.createImmutable(perm));
-    INodeFile inodeFile = new INodeFile(INodeId.GRANDFATHER_INODE_ID,
-      name.getBytes("UTF-8"), permStatus, 0L, 0L, null, REPLICATION,
-      PREFERRED_BLOCK_SIZE);
-    parent.addChild(inodeFile);
-    return inodeFile;
+//    INodeFile inodeFile = new INodeFile(INodeId.GRANDFATHER_INODE_ID,
+//      name.getBytes("UTF-8"), permStatus, 0L, 0L, null, REPLICATION,
+//      PREFERRED_BLOCK_SIZE);
+//    parent.addChild(inodeFile);
+//    return inodeFile;
+    return null;
   }
 }

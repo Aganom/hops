@@ -1327,18 +1327,6 @@ public class DistributedFileSystem extends FileSystem {
   }
 
   /**
-   * List all cache pools.
-   *
-   * @return A remote iterator from which you can get CachePoolEntry objects.
-   *          Requests will be made as needed.
-   * @throws IOException
-   *          If there was an error listing cache pools.
-   */
-  public RemoteIterator<CachePoolEntry> listCachePools() throws IOException {
-    return dfs.listCachePools();
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override

@@ -230,7 +230,7 @@ public class TestStickyBit {
       hdfs.mkdirs(p);
       hdfs.setPermission(p, new FsPermission((short) 01777));
       applyAcl(p);
-      confirmCanAppend(conf, p);
+      confirmCanAppend(conf, hdfs,  p);
   
       baseDir = new Path("/eccleston");
       hdfs.mkdirs(baseDir);
@@ -238,7 +238,7 @@ public class TestStickyBit {
   
       hdfs.mkdirs(p);
       applyAcl(p);
-      confirmSettingAndGetting(hdfs, p, baseDir);
+      confirmSettingAndGetting(hdfs, p);
   
       baseDir = new Path("/tennant");
       hdfs.mkdirs(baseDir);
@@ -246,7 +246,7 @@ public class TestStickyBit {
       hdfs.mkdirs(p);
       hdfs.setPermission(p, new FsPermission((short) 01777));
       applyAcl(p);
-      confirmDeletingFiles(conf, p);
+      confirmDeletingFiles(conf, hdfs, p);
   
       baseDir = new Path("/smith");
       hdfs.mkdirs(baseDir);
@@ -403,9 +403,9 @@ public class TestStickyBit {
    * @throws IOException if an ACL could not be modified
    */
   private static void applyAcl(Path p) throws IOException {
-    hdfs.modifyAclEntries(p, Arrays.asList(
-        aclEntry(ACCESS, USER, user2.getShortUserName(), ALL),
-        aclEntry(DEFAULT, USER, user2.getShortUserName(), ALL)));
+//    hdfs.modifyAclEntries(p, Arrays.asList(
+//        aclEntry(ACCESS, USER, user2.getShortUserName(), ALL),
+//        aclEntry(DEFAULT, USER, user2.getShortUserName(), ALL)));
   }
 
   private void initUsers(){

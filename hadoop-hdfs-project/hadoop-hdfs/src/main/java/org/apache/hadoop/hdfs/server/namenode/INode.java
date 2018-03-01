@@ -35,6 +35,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.Block;
+import org.apache.hadoop.hdfs.protocol.QuotaExceededException;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.util.StringUtils;
 
@@ -218,29 +219,17 @@ public abstract class INode implements Comparable<byte[]> {
     setBlockStoragePolicyIDNoPersistance(other.getLocalStoragePolicyID());
   }
 
-  abstract AclFeature getAclFeature(int snapshotId);
-
-  @Override
-  public final AclFeature getAclFeature() {
-    return getAclFeature(Snapshot.CURRENT_STATE_ID);
+  public AclFeature getAclFeature() {
+    //TODO
+    return null;
   }
 
-  abstract void addAclFeature(AclFeature aclFeature);
-
-  final INode addAclFeature(AclFeature aclFeature, int latestSnapshotId)
-      throws QuotaExceededException {
-    final INode nodeToUpdate = recordModification(latestSnapshotId);
-    nodeToUpdate.addAclFeature(aclFeature);
-    return nodeToUpdate;
+  public void addAclFeature(AclFeature aclFeature){
+    //TODO
   }
-
-  abstract void removeAclFeature();
-
-  final INode removeAclFeature(int latestSnapshotId)
-      throws QuotaExceededException {
-    final INode nodeToUpdate = recordModification(latestSnapshotId);
-    nodeToUpdate.removeAclFeature();
-    return nodeToUpdate;
+  
+  public void removeAclFeature(){
+    //TODO
   }
   
   /**

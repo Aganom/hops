@@ -32,16 +32,11 @@ import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FsServerDefaults;
 import org.apache.hadoop.fs.permission.FsAction;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.AclEntryScope;
 import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.AclStatus;
-import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.ha.HAServiceProtocol.HAServiceState;
-import org.apache.hadoop.ha.proto.HAServiceProtocolProtos;
-import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.StorageType;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.protocol.Block;
@@ -60,21 +55,17 @@ import org.apache.hadoop.hdfs.protocol.HdfsLocatedFileStatus;
 import org.apache.hadoop.hdfs.protocol.LastUpdatedContentSummary;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.hdfs.protocol.LocatedBlocks;
-import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport.DiffReportEntry;
-import org.apache.hadoop.hdfs.protocol.SnapshotDiffReport.DiffType;
-import org.apache.hadoop.hdfs.protocol.SnapshottableDirectoryStatus;
+import org.apache.hadoop.hdfs.protocol.proto.AclProtos;
 import org.apache.hadoop.hdfs.protocol.proto.AclProtos.AclEntryProto;
 import org.apache.hadoop.hdfs.protocol.proto.AclProtos.AclStatusProto;
 import org.apache.hadoop.hdfs.protocol.proto.AclProtos.AclEntryProto.AclEntryScopeProto;
 import org.apache.hadoop.hdfs.protocol.proto.AclProtos.AclEntryProto.AclEntryTypeProto;
-import org.apache.hadoop.hdfs.protocol.proto.AclProtos.AclEntryProto.FsActionProto;
 import org.apache.hadoop.hdfs.protocol.proto.AclProtos.GetAclStatusResponseProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos;
 import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos.CreateFlagProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos.DatanodeReportTypeProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos.GetFsStatsResponseProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos.SafeModeActionProto;
-import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos.FsActionProto;
 import org.apache.hadoop.hdfs.protocol.proto.ClientNamenodeProtocolProtos.LastUpdatedContentSummaryProto;
 import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos;
 import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.ActiveNamenodeListResponseProto;
@@ -195,9 +186,6 @@ public class PBHelper {
     /** Hidden constructor */
   }
 
-  private static final FsAction[] FSACTION_VALUES =
-      FsAction.values();
-
   static <T extends Enum<T>, U extends Enum<U>> U castEnum(T from, U[] to) {
     return to[from.ordinal()];
   }
@@ -205,11 +193,7 @@ public class PBHelper {
   public static ByteString getByteString(byte[] bytes) {
     return ByteString.copyFrom(bytes);
   }
-
-  private static <T extends Enum<T>, U extends Enum<U>> U castEnum(T from, U[] to) {
-    return to[from.ordinal()];
-  }
-
+  
   public static NamenodeRole convert(NamenodeRoleProto role) {
     switch (role) {
       case NAMENODE:
@@ -1612,14 +1596,6 @@ public class PBHelper {
     return castEnum(v, ACL_ENTRY_TYPE_VALUES);
   }
 
-  private static FsActionProto convert(FsAction v) {
-    return FsActionProto.valueOf(v != null ? v.ordinal() : 0);
-  }
-
-  private static FsAction convert(FsActionProto v) {
-    return castEnum(v, FSACTION_VALUES);
-  }
-
   public static List<AclEntryProto> convertAclEntryProto(
       List<AclEntry> aclSpec) {
     ArrayList<AclEntryProto> r = Lists.newArrayListWithCapacity(aclSpec.size());
@@ -1919,11 +1895,11 @@ public class PBHelper {
     }
   }
 
-  public static FsActionProto convert(FsAction v) {
-    return FsActionProto.valueOf(v != null ? v.ordinal() : 0);
+  public static AclEntryProto.FsActionProto convert(FsAction v) {
+    return AclEntryProto.FsActionProto.valueOf(v != null ? v.ordinal() : 0);
   }
 
-  public static FsAction convert(FsActionProto v) {
+  public static FsAction convert(AclEntryProto.FsActionProto v) {
     return castEnum(v, FSACTION_VALUES);
   }
 
