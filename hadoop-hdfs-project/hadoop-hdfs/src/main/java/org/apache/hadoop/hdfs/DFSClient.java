@@ -3285,100 +3285,129 @@ public class DFSClient implements java.io.Closeable {
     }
   }
 
-  void modifyAclEntries(String src, List<AclEntry> aclSpec)
+  void modifyAclEntries(final String src, final List<AclEntry> aclSpec)
           throws IOException {
     checkOpen();
-    //TODO
-//    try {
-//      namenode.modifyAclEntries(src, aclSpec);
-//    } catch(RemoteException re) {
-//      throw re.unwrapRemoteException(AccessControlException.class,
-//              AclException.class,
-//              FileNotFoundException.class,
-//              NSQuotaExceededException.class,
-//              SafeModeException.class,
-//              SnapshotAccessControlException.class,
-//              UnresolvedPathException.class);
-//    }
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode) throws IOException {
+          namenode.modifyAclEntries(src, aclSpec);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "modifyAclEntries");
+    } catch(RemoteException re) {
+          throw re.unwrapRemoteException(AccessControlException.class,
+                  AclException.class,
+                  FileNotFoundException.class,
+                  NSQuotaExceededException.class,
+                  SafeModeException.class,
+                  UnresolvedPathException.class);
+    }
   }
 
-  void removeAclEntries(String src, List<AclEntry> aclSpec)
+  void removeAclEntries(final String src, final List<AclEntry> aclSpec)
           throws IOException {
     checkOpen();
-    //TODO
-//    try {
-//      namenode.removeAclEntries(src, aclSpec);
-//    } catch(RemoteException re) {
-//      throw re.unwrapRemoteException(AccessControlException.class,
-//              AclException.class,
-//              FileNotFoundException.class,
-//              NSQuotaExceededException.class,
-//              SafeModeException.class,
-//              SnapshotAccessControlException.class,
-//              UnresolvedPathException.class);
-//    }
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode) throws IOException {
+          namenode.removeAclEntries(src, aclSpec);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "removeAclEntries");
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              UnresolvedPathException.class);
+    }
   }
 
-  void removeDefaultAcl(String src) throws IOException {
+  void removeDefaultAcl(final String src) throws IOException {
     checkOpen();
-    //TODO
-//    try {
-//      namenode.removeDefaultAcl(src);
-//    } catch(RemoteException re) {
-//      throw re.unwrapRemoteException(AccessControlException.class,
-//              AclException.class,
-//              FileNotFoundException.class,
-//              NSQuotaExceededException.class,
-//              SafeModeException.class,
-//              SnapshotAccessControlException.class,
-//              UnresolvedPathException.class);
-//    }
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode) throws IOException {
+          namenode.removeDefaultAcl(src);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "removeDefaultAcl");
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              UnresolvedPathException.class);
+    }
   }
 
-  void removeAcl(String src) throws IOException {
+  void removeAcl(final String src) throws IOException {
     checkOpen();
-    //TODO
-//    try {
-//      namenode.removeAcl(src);
-//    } catch(RemoteException re) {
-//      throw re.unwrapRemoteException(AccessControlException.class,
-//              AclException.class,
-//              FileNotFoundException.class,
-//              NSQuotaExceededException.class,
-//              SafeModeException.class,
-//              SnapshotAccessControlException.class,
-//              UnresolvedPathException.class);
-//    }
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode) throws IOException {
+          namenode.removeAcl(src);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "removeAcl");
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              UnresolvedPathException.class);
+    }
   }
 
-  void setAcl(String src, List<AclEntry> aclSpec) throws IOException {
+  void setAcl(final String src, final List<AclEntry> aclSpec) throws IOException {
     checkOpen();
-    //TODO
-//    try {
-//      namenode.setAcl(src, aclSpec);
-//    } catch(RemoteException re) {
-//      throw re.unwrapRemoteException(AccessControlException.class,
-//              AclException.class,
-//              FileNotFoundException.class,
-//              NSQuotaExceededException.class,
-//              SafeModeException.class,
-//              SnapshotAccessControlException.class,
-//              UnresolvedPathException.class);
-//    }
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode) throws IOException {
+          namenode.setAcl(src, aclSpec);
+          return null;
+        }
+      };
+      doClientActionWithRetry(handler, "setAcl");
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              NSQuotaExceededException.class,
+              SafeModeException.class,
+              UnresolvedPathException.class);
+    }
   }
 
-  AclStatus getAclStatus(String src) throws IOException {
+  AclStatus getAclStatus(final String src) throws IOException {
     checkOpen();
-    //TODO
-//    try {
-//      return namenode.getAclStatus(src);
-//    } catch(RemoteException re) {
-//      throw re.unwrapRemoteException(AccessControlException.class,
-//              AclException.class,
-//              FileNotFoundException.class,
-//              UnresolvedPathException.class);
-//    }
-    return null;
+    try {
+      ClientActionHandler handler = new ClientActionHandler() {
+        @Override
+        public Object doAction(ClientProtocol namenode) throws IOException {
+          return namenode.getAclStatus(src);
+        }
+      };
+      return (AclStatus) doClientActionWithRetry(handler, "getAclStatus");
+    } catch(RemoteException re) {
+      throw re.unwrapRemoteException(AccessControlException.class,
+              AclException.class,
+              FileNotFoundException.class,
+              UnresolvedPathException.class);
+    }
   }
 
 
