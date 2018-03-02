@@ -29,6 +29,7 @@ package hadoop.hdfs;
 import "Security.proto";
 
 import "hdfs.proto";
+
 import "acl.proto";
 
 import "ActiveNode.proto";
