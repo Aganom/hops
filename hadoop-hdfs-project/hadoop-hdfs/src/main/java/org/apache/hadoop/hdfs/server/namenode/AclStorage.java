@@ -202,6 +202,8 @@ final class AclStorage {
         throw new AclException(
           "Invalid ACL: only directories may have a default ACL.");
       }
+      
+      checkNoDisallowedEntries(newAcl);
 
       // Attach entries to the feature.
       if (hasOwnExtendedAcl(inode)) {
@@ -221,6 +223,16 @@ final class AclStorage {
     inode.setPermission(newPerm);//, snapshotId);
   }
 
+  private static void checkNoDisallowedEntries(List<AclEntry> newAcl) throws AclException {
+    for (AclEntry aclEntry : newAcl) {
+      //Only allow named default entries
+      if (aclEntry.getScope().equals(AclEntryScope.DEFAULT)
+          && (aclEntry.getName() == null || aclEntry.getName().isEmpty())){
+        throw new AclException("HOPS does not allowed unnamed DEFAULT entries");
+      }
+    }
+  }
+  
   /**
    * There is no reason to instantiate this class.
    */
