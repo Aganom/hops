@@ -227,7 +227,7 @@ final class AclStorage {
    * @param snapshotId int latest snapshot ID of inode
    * @throws QuotaExceededException if quota limit is exceeded
    */
-  public static void removeINodeAcl(INode inode, int snapshotId)
+  public static void removeINodeAcl(INode inode)
       throws QuotaExceededException, TransactionContextException, StorageException {
     AclFeature f = inode.getAclFeature();
     if (f == null) {

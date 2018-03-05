@@ -2228,6 +2228,7 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 //      existingAcl, aclSpec);
 //    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
 //    return newAcl;
+    return null;
   }
 
   void removeDefaultAcl(String src) throws IOException {
@@ -2253,6 +2254,7 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 //      existingAcl);
 //    AclStorage.updateINodeAcl(inode, newAcl, snapshotId);
 //    return newAcl;
+    return null;
   }
 
   void removeAcl(String src) throws IOException {
