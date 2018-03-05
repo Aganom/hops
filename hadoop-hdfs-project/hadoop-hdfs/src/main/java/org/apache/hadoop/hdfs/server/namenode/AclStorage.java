@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hdfs.server.namenode;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,96 +64,16 @@ import org.apache.hadoop.hdfs.protocol.QuotaExceededException;
 final class AclStorage {
 
   /**
-   * If a default ACL is defined on a parent directory, then copies that default
-   * ACL to a newly created child file or directory.
-   *
-   * @param child INode newly created child
-   */
-  public static void copyINodeDefaultAcl(INode child) throws TransactionContextException, StorageException {
-    INodeDirectory parent = child.getParent();
-    AclFeature parentAclFeature = parent.getAclFeature();
-    if (parentAclFeature == null || !(child.isFile() || child.isDirectory())) {
-      return;
-    }
-
-    // Split parent's entries into access vs. default.
-    List<AclEntry> featureEntries = parent.getAclFeature().getEntries();
-    ScopedAclEntries scopedEntries = new ScopedAclEntries(featureEntries);
-    List<AclEntry> parentDefaultEntries = scopedEntries.getDefaultEntries();
-
-    // The parent may have an access ACL but no default ACL.  If so, exit.
-    if (parentDefaultEntries.isEmpty()) {
-      return;
-    }
-
-    // Pre-allocate list size for access entries to copy from parent.
-    List<AclEntry> accessEntries = Lists.newArrayListWithCapacity(
-      parentDefaultEntries.size());
-
-    FsPermission childPerm = child.getFsPermission();
-
-    // Copy each default ACL entry from parent to new child's access ACL.
-    boolean parentDefaultIsMinimal = isMinimalAcl(parentDefaultEntries);
-    for (AclEntry entry: parentDefaultEntries) {
-      AclEntryType type = entry.getType();
-      String name = entry.getName();
-      AclEntry.Builder builder = new AclEntry.Builder()
-        .setScope(AclEntryScope.ACCESS)
-        .setType(type)
-        .setName(name);
-
-      // The child's initial permission bits are treated as the mode parameter,
-      // which can filter copied permission values for owner, mask and other.
-      final FsAction permission;
-      if (type == AclEntryType.USER && name == null) {
-        permission = entry.getPermission().and(childPerm.getUserAction());
-      } else if (type == AclEntryType.GROUP && parentDefaultIsMinimal) {
-        // This only happens if the default ACL is a minimal ACL: exactly 3
-        // entries corresponding to owner, group and other.  In this case,
-        // filter the group permissions.
-        permission = entry.getPermission().and(childPerm.getGroupAction());
-      } else if (type == AclEntryType.MASK) {
-        // Group bits from mode parameter filter permission of mask entry.
-        permission = entry.getPermission().and(childPerm.getGroupAction());
-      } else if (type == AclEntryType.OTHER) {
-        permission = entry.getPermission().and(childPerm.getOtherAction());
-      } else {
-        permission = entry.getPermission();
-      }
-
-      builder.setPermission(permission);
-      accessEntries.add(builder.build());
-    }
-
-    // A new directory also receives a copy of the parent's default ACL.
-    List<AclEntry> defaultEntries = child.isDirectory() ? parentDefaultEntries :
-      Collections.<AclEntry>emptyList();
-
-    final FsPermission newPerm;
-    if (!isMinimalAcl(accessEntries) || !defaultEntries.isEmpty()) {
-      // Save the new ACL to the child.
-      child.addAclFeature(createAclFeature(accessEntries, defaultEntries));
-      newPerm = createFsPermissionForExtendedAcl(accessEntries, childPerm);
-    } else {
-      // The child is receiving a minimal ACL.
-      newPerm = createFsPermissionForMinimalAcl(accessEntries, childPerm);
-    }
-
-    child.setPermission(newPerm);
-  }
-
-  /**
    * Reads the existing extended ACL entries of an inode.  This method returns
    * only the extended ACL entries stored in the AclFeature.  If the inode does
    * not have an ACL, then this method returns an empty list.  This method
    * supports querying by snapshot ID.
    *
    * @param inode INode to read
-   * @param snapshotId int ID of snapshot to read
    * @return List<AclEntry> containing extended inode ACL entries
    */
-  public static List<AclEntry> readINodeAcl(INode inode) {
-    AclFeature f = inode.getAclFeature();
+  public static List<AclEntry> readINodeAcl(INode inode) throws IOException {
+    AclFeature f = getAclFeature(inode);
     return f == null ? ImmutableList.<AclEntry> of() : f.getEntries();
   }
 
@@ -170,9 +91,9 @@ final class AclStorage {
    * @param inode INode to read
    * @return List<AclEntry> containing all logical inode ACL entries
    */
-  public static List<AclEntry> readINodeLogicalAcl(INode inode) {
+  public static List<AclEntry> readINodeLogicalAcl(INode inode) throws IOException {
     FsPermission perm = inode.getFsPermission();
-    AclFeature f = inode.getAclFeature();
+    AclFeature f = getAclFeature(inode);
     if (f == null) {
       return getMinimalAcl(perm);
     }
@@ -224,12 +145,12 @@ final class AclStorage {
    * Completely removes the ACL from an inode.
    *
    * @param inode INode to update
-   * @param snapshotId int latest snapshot ID of inode
    * @throws QuotaExceededException if quota limit is exceeded
    */
   public static void removeINodeAcl(INode inode)
-      throws QuotaExceededException, TransactionContextException, StorageException {
-    AclFeature f = inode.getAclFeature();
+      throws IOException {
+    
+    AclFeature f = getAclFeature(inode);
     if (f == null) {
       return;
     }
@@ -250,8 +171,10 @@ final class AclStorage {
       inode.setPermission(newPerm);//, snapshotId);
     }
 
-    inode.removeAclFeature();//snapshotId);
+    removeAclFeature(inode);
   }
+  
+  
 
   /**
    * Updates an inode with a new ACL.  This method takes a full logical ACL and
@@ -260,12 +183,11 @@ final class AclStorage {
    *
    * @param inode INode to update
    * @param newAcl List<AclEntry> containing new ACL entries
-   * @param snapshotId int latest snapshot ID of inode
    * @throws AclException if the ACL is invalid for the given inode
    * @throws QuotaExceededException if quota limit is exceeded
    */
   public static void updateINodeAcl(INode inode, List<AclEntry> newAcl)
-      throws AclException, QuotaExceededException, TransactionContextException, StorageException {
+      throws IOException {
     assert newAcl.size() >= 3;
     FsPermission perm = inode.getFsPermission();
     final FsPermission newPerm;
@@ -282,15 +204,16 @@ final class AclStorage {
       }
 
       // Attach entries to the feature.
-      if (inode.getAclFeature() != null) {
-        inode.removeAclFeature();//snapshotId);
+      if (hasOwnExtendedAcl(inode)) {
+        removeAclFeature(inode);
       }
-      inode.addAclFeature(createAclFeature(accessEntries, defaultEntries));//,snapshotId);
+      
+      addAclFeature(inode, createAclFeature(accessEntries, defaultEntries));
       newPerm = createFsPermissionForExtendedAcl(accessEntries, perm);
     } else {
       // This is a minimal ACL.  Remove the ACL feature if it previously had one.
-      if (inode.getAclFeature() != null) {
-        inode.removeAclFeature();//snapshotId);
+      if (hasOwnExtendedAcl(inode)) {
+        removeAclFeature(inode);
       }
       newPerm = createFsPermissionForMinimalAcl(newAcl, perm);
     }
@@ -403,5 +326,73 @@ final class AclStorage {
    */
   private static boolean isMinimalAcl(List<AclEntry> entries) {
     return entries.size() == 3;
+  }
+  
+  private static void removeAclFeature(INode inode) throws IOException {
+    INodeAces.removeInodeAces(inode.id);
+  }
+  
+  private static boolean hasOwnExtendedAcl(INode inode) throws IOException {
+    INodeAces.getInodeAcl(inode);
+    return !INodeAces.getInodeAcl(inode).isEmpty();
+  }
+  
+  private static void addAclFeature(INode inode, AclFeature aclFeature) throws IOException {
+    INodeAces.addInodeAces(inode.id, aclFeature.getEntries());
+  }
+  
+  /**
+   * HOPS: Get the extended acl entries for an inode.
+   * This method recursively checks the ancestor path for default aces, in case the requested
+   * inode doesn't have an extended acl itself.
+   *
+   * @return the corresponding AclFeature if any, otherwise null.
+   */
+  public static AclFeature getAclFeature(INode inode) throws IOException {
+    List<AclEntry> inodeAcl = INodeAces.getInodeAcl(inode);
+    if (inodeAcl.isEmpty()){
+      inodeAcl = getInheritedAces(inode.parent);
+    }
+    
+    if (inodeAcl.isEmpty()){
+      //No inherited aces found
+      return null;
+    }
+    
+    return new AclFeature(inodeAcl);
+  }
+  
+  private static List<AclEntry> getInheritedAces(INode inode)
+      throws IOException {
+    if (inode == null){
+      return Lists.newArrayList();
+    }
+    List<AclEntry> inodeAcl = INodeAces.getInodeAcl(inode);
+    
+    List<AclEntry> convertedEntries = convertDefaultToAccess(extractDefaultEntries(inodeAcl));
+    if (convertedEntries.isEmpty()){
+      return getInheritedAces(inode.parent);
+    }
+    return convertedEntries;
+  }
+  
+  private static List<AclEntry> extractDefaultEntries(List<AclEntry> aclEntries){
+    List<AclEntry> defaultEntries = Lists.newArrayList();
+    for (AclEntry aclEntry : aclEntries) {
+      if (aclEntry.getScope().equals(AclEntryScope.DEFAULT)){
+        defaultEntries.add(aclEntry);
+      }
+    }
+    return defaultEntries;
+  }
+  
+  private static List<AclEntry> convertDefaultToAccess(List<AclEntry> entries){
+    List<AclEntry> convertedEntries = Lists.newArrayList();
+    for (AclEntry entry : entries) {
+      convertedEntries.add(new AclEntry.Builder().setType(entry.getType()).setPermission(entry.getPermission())
+          .setName(entry.getName()).setScope(AclEntryScope.ACCESS).build());
+
+    }
+    return convertedEntries;
   }
 }

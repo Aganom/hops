@@ -291,7 +291,7 @@ public class FsPermission implements Writable {
    */
   public boolean getAclBit() {
     // File system subclasses that support the ACL bit would override this.
-    return false;
+    return true; //TODO should this be dynamic?
   }
 
   /**

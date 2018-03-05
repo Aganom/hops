@@ -277,7 +277,7 @@ class FSPermissionChecker {
     }
     FsPermission mode = inode.getFsPermission();
   
-    AclFeature aclFeature = inode.getAclFeature();//snapshotId);
+    AclFeature aclFeature = AclStorage.getAclFeature(inode);
     if (aclFeature != null) {
       List<AclEntry> featureEntries = aclFeature.getEntries();
       // It's possible that the inode has a default ACL but no access ACL.

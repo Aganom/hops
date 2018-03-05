@@ -1061,7 +1061,7 @@ public abstract class FSAclBaseTest {
     INode inode = null;//cluster.getNamesystem().getFSDirectory().getRoot()
     //  .getNode(pathToCheck.toUri().getPath(), false);
     assertNotNull(inode);
-    AclFeature aclFeature = inode.getAclFeature();
+    AclFeature aclFeature = AclStorage.getAclFeature(inode);
     if (expectAclFeature) {
       assertNotNull(aclFeature);
     } else {

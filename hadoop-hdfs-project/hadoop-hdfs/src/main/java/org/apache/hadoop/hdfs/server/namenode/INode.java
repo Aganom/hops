@@ -218,19 +218,6 @@ public abstract class INode implements Comparable<byte[]> {
 
     setBlockStoragePolicyIDNoPersistance(other.getLocalStoragePolicyID());
   }
-
-  public AclFeature getAclFeature() {
-    //TODO
-    return null;
-  }
-
-  public void addAclFeature(AclFeature aclFeature){
-    //TODO
-  }
-  
-  public void removeAclFeature(){
-    //TODO
-  }
   
   /**
    * Check whether this is the root inode.

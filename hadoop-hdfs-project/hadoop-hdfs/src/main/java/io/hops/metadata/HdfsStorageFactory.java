@@ -109,6 +109,7 @@ import org.apache.hadoop.hdfs.server.blockmanagement.BlockInfoUnderConstruction;
 import org.apache.hadoop.hdfs.server.blockmanagement.PendingBlockInfo;
 import org.apache.hadoop.hdfs.server.blockmanagement.ReplicaUnderConstruction;
 import org.apache.hadoop.hdfs.server.namenode.INode;
+import org.apache.hadoop.hdfs.server.namenode.INodeAces;
 import org.apache.hadoop.hdfs.server.namenode.INodeAttributes;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectory;
 import org.apache.hadoop.hdfs.server.namenode.INodeDirectoryWithQuota;
@@ -181,6 +182,10 @@ public class HdfsStorageFactory {
             .HOPS_GROUPS_UPDATER_ROUND_DEFAULT), conf.getInt(CommonConfigurationKeys
             .HOPS_USERS_LRU_THRESHOLD, CommonConfigurationKeys
             .HOPS_USERS_LRU_THRESHOLD_DEFAULT));
+      }
+      if (conf.getBoolean(DFSConfigKeys.DFS_NAMENODE_ACLS_ENABLED_KEY, DFSConfigKeys
+          .DFS_NAMENODE_ACLS_ENABLED_DEFAULT)){
+               INodeAces.init();
       }
       isDALInitialized = true;
     }
