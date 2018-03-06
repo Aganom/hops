@@ -33,6 +33,7 @@ import io.hops.transaction.lock.TransactionLockTypes;
 import io.hops.transaction.lock.TransactionLocks;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSTestUtil;
 import org.apache.hadoop.hdfs.HdfsConfiguration;
@@ -388,6 +389,62 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/file1", ALL);
   }
+  
+  @Test
+  public void testInheritDefault() throws IOException {
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce", "sales", (short)0770);
+    Path file1 = new Path(dir1, "file1");
+    createINodeFile(file1, "bruce", "sales", (short)0770);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "clark", READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "execs", ALL),
+        aclEntry(ACCESS, GROUP, ALL),
+        aclEntry(ACCESS, OTHER, ALL),
+        aclEntry(DEFAULT, GROUP, "execs", READ),
+        aclEntry(DEFAULT, USER, "diana", NONE));
+  
+    assertPermissionGranted(CLARK, "/dir1/file1", READ);
+    assertPermissionDenied(DIANA, "/dir1/file1", READ);
+    assertPermissionDenied(CLARK, "/dir1/file1", WRITE);
+  }
+  
+  @Test
+  public void testInheritDefaultDeep() throws IOException {
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce", "sales", (short)0770);
+    Path dir2 = new Path(dir1, "dir2");
+    createINodeDirectory(dir2, "bruce", "sales", (short)0770);
+    Path file1 = new Path(dir2, "file1");
+    createINodeFile(file1, "bruce", "sales", (short)0770);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "clark", READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "execs", ALL),
+        aclEntry(ACCESS, GROUP, ALL),
+        aclEntry(ACCESS, OTHER, ALL),
+        aclEntry(DEFAULT, GROUP, "execs", READ),
+        aclEntry(DEFAULT, USER, "diana", NONE));
+    
+    addAcl(dir2,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "clark", READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "execs", ALL),
+        aclEntry(ACCESS, GROUP, ALL),
+        aclEntry(ACCESS, OTHER, ALL),
+        aclEntry(DEFAULT, GROUP, "execs", NONE),
+        aclEntry(DEFAULT, USER, "diana", READ));
+  
+    assertPermissionDenied(CLARK, "/dir1/dir2/file1", READ);
+    assertPermissionGranted(DIANA, "/dir1/dir2/file1", READ);
+    assertPermissionDenied(CLARK, "/dir1/dir2/file1", WRITE);
+  }
+  
+  @Test
+  public void testInheritedBlockedByIntermediateDefault() throws IOException {
+  
+  }
 
   private void addAcl(final Path src, final AclEntry... acl)
       throws IOException {
@@ -459,11 +516,12 @@ public class TestFSPermissionChecker {
     PermissionStatus permStatus = PermissionStatus.createImmutable(owner, group,
       FsPermission.createImmutable(perm));
     cluster.getNamesystem().mkdirs(src.toString(), permStatus, false);
+    cluster.getNamesystem().setOwner(src.toString(), owner, group);
+    cluster.getNamesystem().setPermission(src.toString(), FsPermission.createImmutable(perm));
   }
 
   private void createINodeFile(Path src,
       String owner, String group, short perm) throws IOException {
-    
     DFSTestUtil.createFile(cluster.getFileSystem(), src, 0,(short)1, 0L);
     cluster.getNamesystem().setOwner(src.toString(), owner, group);
     cluster.getNamesystem().setPermission(src.toString(), FsPermission.createImmutable(perm));

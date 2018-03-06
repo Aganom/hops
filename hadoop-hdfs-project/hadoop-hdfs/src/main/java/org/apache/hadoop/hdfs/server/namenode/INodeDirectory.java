@@ -270,7 +270,11 @@ public class INodeDirectory extends INode {
         break;
       }
       INodeDirectory parentDir = (INodeDirectory) curNode;
-      curNode = parentDir.getChildINode(components[count]);
+      INode next = parentDir.getChildINode(components[count]);
+      if (next != null) {
+        next.parent = parentDir;
+      }
+      curNode = next;
     }
     return count;
   }
