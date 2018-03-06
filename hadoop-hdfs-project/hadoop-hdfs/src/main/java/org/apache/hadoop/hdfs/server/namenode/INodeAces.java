@@ -179,7 +179,8 @@ public class INodeAces {
   }
   
   private static Ace newAce(int inodeId, AclEntry entry, int index){
-    return new Ace(-1, inodeId, entry.getName(), convert(entry.getType()), entry.getScope().equals(AclEntryScope
+    return new Ace(Ace.NON_EXISTING_ACE_ID, inodeId, entry.getName(), convert(entry.getType()), entry.getScope().equals
+        (AclEntryScope
         .DEFAULT), entry.getPermission().ordinal(), index);
   }
   

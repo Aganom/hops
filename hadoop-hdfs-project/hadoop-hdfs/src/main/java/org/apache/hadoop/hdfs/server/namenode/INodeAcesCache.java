@@ -62,7 +62,4 @@ class INodeAcesCache {
     }
     inodesToAcls.put(inodeId, aces);
   }
-  
-  
-  
 }

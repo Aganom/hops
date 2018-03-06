@@ -157,6 +157,7 @@ public class INodeDirectory extends INode {
         .find(Finder.ByNameParentIdAndPartitionId, DFSUtil.bytes2String(name),
             getId(), childPartitionId);
     if (existingInode != null && existingInode.exists()) {
+      existingInode.parent = this;
       return existingInode;
     }
     return null;
@@ -270,11 +271,7 @@ public class INodeDirectory extends INode {
         break;
       }
       INodeDirectory parentDir = (INodeDirectory) curNode;
-      INode next = parentDir.getChildINode(components[count]);
-      if (next != null) {
-        next.parent = parentDir;
-      }
-      curNode = next;
+      curNode = parentDir.getChildINode(components[count]);
     }
     return count;
   }
