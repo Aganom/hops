@@ -18,11 +18,13 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.SignedBytes;
 import io.hops.erasure_coding.ErasureCodingManager;
 import io.hops.exception.StorageException;
 import io.hops.exception.TransactionContextException;
 import io.hops.metadata.common.FinderType;
+import io.hops.metadata.hdfs.entity.Ace;
 import io.hops.metadata.hdfs.entity.EncodingStatus;
 import io.hops.metadata.hdfs.entity.INodeIdentifier;
 import io.hops.metadata.hdfs.entity.MetadataLogEntry;
@@ -31,6 +33,10 @@ import io.hops.transaction.EntityManager;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclEntryScope;
+import org.apache.hadoop.fs.permission.AclEntryType;
+import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
@@ -43,6 +49,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -59,8 +66,6 @@ public abstract class INode implements Comparable<byte[]> {
   
   public static final List<INode> EMPTY_LIST =
       Collections.unmodifiableList(new ArrayList<INode>());
-
-
   public enum Finder implements FinderType<INode> {
 
     ByINodeIdFTIS,//FTIS full table index scan
@@ -223,6 +228,10 @@ public abstract class INode implements Comparable<byte[]> {
   private FsPermission permission;
 
   private int logicalTime;
+  
+  private boolean hasAce1;
+  private boolean hasAce2;
+  private boolean hasMoreAces;
 
   /**
    * The inode id
@@ -241,9 +250,6 @@ public abstract class INode implements Comparable<byte[]> {
   protected INodeDirectory parent = null;
   protected long modificationTime = 0L;
   protected long accessTime = 0L;
-  private int ace1Id = -1;
-  private int ace2Id = -1;
-  private boolean hasMoreAces;
 
   INode(int id, byte[] name, PermissionStatus permission, INodeDirectory parent,
       long modificationTime, long accessTime, boolean inTree) throws IOException{
@@ -298,22 +304,24 @@ public abstract class INode implements Comparable<byte[]> {
     return this.id;
   }
 
-  public AclFeature getAclFeature() {
-    //TODO
-    return null;
+  public AclFeature getAclFeature() throws TransactionContextException, StorageException {
+    return INodeAclHelper.getAclFeature(this);
   }
 
-  public void addAclFeature(AclFeature aclFeature){
-    //TODO
+  public void addAclFeature(AclFeature aclFeature) throws TransactionContextException, StorageException {
+    INodeAclHelper.addAclFeature(this, aclFeature);
   }
   
   public void removeAclFeature(){
-    //TODO
+    INodeAclHelper.removeAclFeature(this);
   }
   
   public boolean hasOwnAcl(){
-    //Aces are always populated in order: ace1Id, ace2Id and "hasMoreAces"
-    return ace1Id != -1;
+    return INodeAclHelper.hasOwnAcl(this);
+  }
+  
+  public boolean hasMoreAces(){
+    return this.hasMoreAces();
   }
   
   /**
@@ -825,34 +833,30 @@ public abstract class INode implements Comparable<byte[]> {
     save();
   }
   
-  public int getAce1Id() {
-    return ace1Id;
-  }
-  
-  public void setAce1Id(int ace1Id) throws TransactionContextException, StorageException {
-    setAce1IdNoPersistence(ace1Id);
-    save(this);
-  }
-  
-  public void setAce1IdNoPersistence(int ace1Id){
-    this.ace1Id = this.ace1Id;
-  }
-  
-  public int getAce2Id() {
-    return ace2Id;
-  }
-  
-  public void setAce2Id(int ace2Id) throws TransactionContextException, StorageException {
-    setAce2IdNoPersistence(ace2Id);
+  public void setHasAce1(boolean hasAce1) throws TransactionContextException, StorageException {
+    setHasAce1NoPersistence(hasAce1);
     save();
   }
   
-  public void setAce2IdNoPersistence(int ace2Id){
-    this.ace2Id = this.ace2Id;
+  public void setHasAce1NoPersistence(boolean hasAce1){
+    this.hasAce1 = hasAce1;
   }
   
-  public boolean isHasMoreAces() {
-    return hasMoreAces;
+  public boolean hasAce1(){
+    return this.hasAce1;
+  }
+  
+  public void setHasAce2(boolean hasAce2) throws TransactionContextException, StorageException {
+    setHasAce2NoPersistence(hasAce2);
+    save();
+  }
+  
+  public void setHasAce2NoPersistence(boolean hasAce2) {
+    this.hasAce2 = hasAce2;
+  }
+  
+  public boolean hasAce2() {
+    return this.hasAce2;
   }
   
   public void setHasMoreAces(boolean hasMoreAces) throws TransactionContextException, StorageException {

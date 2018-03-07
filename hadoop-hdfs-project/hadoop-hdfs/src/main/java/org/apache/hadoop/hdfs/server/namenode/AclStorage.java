@@ -151,7 +151,7 @@ final class AclStorage {
    * @param snapshotId int ID of snapshot to read
    * @return List<AclEntry> containing extended inode ACL entries
    */
-  public static List<AclEntry> readINodeAcl(INode inode) {
+  public static List<AclEntry> readINodeAcl(INode inode) throws TransactionContextException, StorageException {
     AclFeature f = inode.getAclFeature();
     return f == null ? ImmutableList.<AclEntry> of() : f.getEntries();
   }
@@ -170,7 +170,7 @@ final class AclStorage {
    * @param inode INode to read
    * @return List<AclEntry> containing all logical inode ACL entries
    */
-  public static List<AclEntry> readINodeLogicalAcl(INode inode) {
+  public static List<AclEntry> readINodeLogicalAcl(INode inode) throws TransactionContextException, StorageException {
     FsPermission perm = inode.getFsPermission();
     AclFeature f = inode.getAclFeature();
     if (f == null) {

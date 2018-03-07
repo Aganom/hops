@@ -7526,6 +7526,7 @@ public class FSNamesystem
         LockFactory lf = LockFactory.getInstance();
         locks.add(lf.getINodeLock(false, nameNode, INodeLockType.WRITE,
             INodeResolveType.PATH, src));
+        locks.add(lf.getAcesLock());
       }
     
       @Override
@@ -7549,6 +7550,7 @@ public class FSNamesystem
         LockFactory lf = LockFactory.getInstance();
         locks.add(lf.getINodeLock(true, nameNode, INodeLockType.WRITE,
             INodeResolveType.PATH, src));
+        locks.add(lf.getAcesLock());
       }
       @Override
       public Object performTask() throws IOException {
@@ -7571,6 +7573,7 @@ public class FSNamesystem
         LockFactory lf = LockFactory.getInstance();
         locks.add(lf.getINodeLock(true, nameNode, INodeLockType.WRITE,
             INodeResolveType.PATH, src));
+        locks.add(lf.getAcesLock());
       }
       @Override
       public Object performTask() throws IOException {
@@ -7593,6 +7596,7 @@ public class FSNamesystem
         LockFactory lf = LockFactory.getInstance();
         locks.add(lf.getINodeLock(true, nameNode, INodeLockType.WRITE,
             INodeResolveType.PATH, src));
+        locks.add(lf.getAcesLock());
       }
       @Override
       public Object performTask() throws IOException {
@@ -7614,6 +7618,7 @@ public class FSNamesystem
         LockFactory lf = LockFactory.getInstance();
         locks.add(lf.getINodeLock(true, nameNode, INodeLockType.WRITE,
             INodeResolveType.PATH, src));
+        locks.add(lf.getAcesLock());
       }
     
       @Override
@@ -7638,6 +7643,7 @@ public class FSNamesystem
         LockFactory lf = LockFactory.getInstance();
         locks.add(lf.getINodeLock(true, nameNode, INodeLockType.WRITE,
             INodeResolveType.PATH, src));
+        locks.add(lf.getAcesLock());
       }
       
       @Override

@@ -33,23 +33,11 @@ import java.util.Map;
 public class AcesContext
     extends BaseEntityContext<Ace.PrimaryKey, Ace> {
   
-  private AceDataAccess dataAccess;
+  private AceDataAccess<Ace> dataAccess;
   Map<Integer, List<Ace>> inodeAces = new HashMap<>();
   
-  public AcesContext(AceDataAccess aceDataAccess) {
+  public AcesContext(AceDataAccess<Ace> aceDataAccess) {
     this.dataAccess = aceDataAccess;
-  }
-  
-  @Override
-  public Ace find(FinderType<Ace> finder, Object... params)
-      throws TransactionContextException, StorageException {
-    Ace.Finder aceFinder = (Ace.Finder) finder;
-    switch (aceFinder){
-      case InodeIdAndId:
-        return findByPrimaryKey(aceFinder, params);
-      default:
-        throw new RuntimeException(UNSUPPORTED_FINDER);
-    }
   }
   
   @Override
@@ -59,6 +47,8 @@ public class AcesContext
     switch (aceFinder){
       case ByInodeId:
         return findByInodeId(aceFinder, params);
+      case ByInodeIdAndAceIds:
+        return findByPKBatched(aceFinder, params);
       default:
         throw new RuntimeException(UNSUPPORTED_FINDER);
     }
@@ -80,10 +70,12 @@ public class AcesContext
     return result;
   }
   
-  private Ace findByPrimaryKey(Ace.Finder aceFinder, Object[] params)
+  private Collection<Ace> findByPKBatched(Ace.Finder aceFinder, Object[] params)
       throws StorageException, StorageCallPreventedException {
-    int inodeId = (Integer) params[0];
-    int id = (Integer) params[1];
+    int inodeId = (int) params[0];
+    int[] aceIds = (int[]) params[1];
+    
+    
     Ace.PrimaryKey pk = new Ace.PrimaryKey(inodeId, id);
     Ace result;
     if (contains(pk)){
@@ -91,7 +83,7 @@ public class AcesContext
       hit(aceFinder, result, "inodeId", inodeId, "id", id);
     } else {
       aboutToAccessStorage(aceFinder, params);
-      result = (Ace) dataAccess.getAceByPK(inodeId, id);
+      result = (Ace) dataAccess.getAcesByPKBatched(inodeId, aceIds);
       gotFromDB(pk, result);
       miss(aceFinder, result, "inodeId", inodeId, "id", id);
     }
