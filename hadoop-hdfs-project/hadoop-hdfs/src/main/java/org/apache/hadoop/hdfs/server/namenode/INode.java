@@ -28,7 +28,6 @@ import io.hops.metadata.hdfs.entity.INodeIdentifier;
 import io.hops.metadata.hdfs.entity.MetadataLogEntry;
 import io.hops.security.UsersGroups;
 import io.hops.transaction.EntityManager;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.Path;
@@ -36,7 +35,6 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.Block;
-import org.apache.hadoop.hdfs.protocol.QuotaExceededException;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.util.StringUtils;
 
@@ -243,6 +241,9 @@ public abstract class INode implements Comparable<byte[]> {
   protected INodeDirectory parent = null;
   protected long modificationTime = 0L;
   protected long accessTime = 0L;
+  private int ace1Id = -1;
+  private int ace2Id = -1;
+  private boolean hasMoreAces;
 
   INode(int id, byte[] name, PermissionStatus permission, INodeDirectory parent,
       long modificationTime, long accessTime, boolean inTree) throws IOException{
@@ -308,6 +309,11 @@ public abstract class INode implements Comparable<byte[]> {
   
   public void removeAclFeature(){
     //TODO
+  }
+  
+  public boolean hasOwnAcl(){
+    //Aces are always populated in order: ace1Id, ace2Id and "hasMoreAces"
+    return ace1Id != -1;
   }
   
   /**
@@ -817,6 +823,45 @@ public abstract class INode implements Comparable<byte[]> {
       throws StorageException, TransactionContextException {
     setModificationTimeForceNoPersistance(modtime);
     save();
+  }
+  
+  public int getAce1Id() {
+    return ace1Id;
+  }
+  
+  public void setAce1Id(int ace1Id) throws TransactionContextException, StorageException {
+    setAce1IdNoPersistence(ace1Id);
+    save(this);
+  }
+  
+  public void setAce1IdNoPersistence(int ace1Id){
+    this.ace1Id = this.ace1Id;
+  }
+  
+  public int getAce2Id() {
+    return ace2Id;
+  }
+  
+  public void setAce2Id(int ace2Id) throws TransactionContextException, StorageException {
+    setAce2IdNoPersistence(ace2Id);
+    save();
+  }
+  
+  public void setAce2IdNoPersistence(int ace2Id){
+    this.ace2Id = this.ace2Id;
+  }
+  
+  public boolean isHasMoreAces() {
+    return hasMoreAces;
+  }
+  
+  public void setHasMoreAces(boolean hasMoreAces) throws TransactionContextException, StorageException {
+    setHasMoreAcesNoPersistence(hasMoreAces);
+    save();
+  }
+  
+  public void setHasMoreAcesNoPersistence(boolean hasMoreAces){
+    this.hasMoreAces = hasMoreAces;
   }
   
   public void inTree() {

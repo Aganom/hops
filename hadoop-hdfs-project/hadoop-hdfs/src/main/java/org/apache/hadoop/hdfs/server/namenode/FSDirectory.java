@@ -2336,10 +2336,11 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 
   private static INode resolveLastINode(String src, INodesInPath iip)
       throws FileNotFoundException {
-    INode inode = iip.getLastINode();
-    if (inode == null)
-      throw new FileNotFoundException("cannot find " + src);
-    return inode;
+//    INode inode = iip.getLastINode();
+//    if (inode == null)
+//      throw new FileNotFoundException("cannot find " + src);
+//    return inode;
+    return null;
   }
 
   /**
