@@ -286,7 +286,7 @@ class FSPermissionChecker {
         return;
       }
     }
-    checkFsPermission(inode, access, mode); //TODO maybe remove this call
+    //checkFsPermission(inode, access, mode); //TODO maybe remove this call
     
     check(inode.getId(), access, mode, inode.getUserName(),
         inode.getGroupName());

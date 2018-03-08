@@ -34,7 +34,7 @@ public class AcesContext
     extends BaseEntityContext<Ace.PrimaryKey, Ace> {
   
   private AceDataAccess<Ace> dataAccess;
-  Map<Integer, List<Ace>> inodeAces = new HashMap<>();
+  private Map<Integer, List<Ace>> inodeAces = new HashMap<>();
   
   public AcesContext(AceDataAccess<Ace> aceDataAccess) {
     this.dataAccess = aceDataAccess;
@@ -75,17 +75,16 @@ public class AcesContext
     int inodeId = (int) params[0];
     int[] aceIds = (int[]) params[1];
     
-    
-    Ace.PrimaryKey pk = new Ace.PrimaryKey(inodeId, id);
-    Ace result;
-    if (contains(pk)){
-      result = get(pk);
-      hit(aceFinder, result, "inodeId", inodeId, "id", id);
+    List<Ace> result;
+    if(inodeAces.containsKey(inodeId)){
+      result = inodeAces.get(inodeId);
+      hit(aceFinder, result, "inodeId", inodeId);
     } else {
       aboutToAccessStorage(aceFinder, params);
-      result = (Ace) dataAccess.getAcesByPKBatched(inodeId, aceIds);
-      gotFromDB(pk, result);
-      miss(aceFinder, result, "inodeId", inodeId, "id", id);
+      result = dataAccess.getAcesByPKBatched(inodeId, aceIds);
+      inodeAces.put(inodeId, result);
+      gotFromDB(result);
+      miss(aceFinder, result, "inodeId", inodeId);
     }
     
     return result;
@@ -94,11 +93,11 @@ public class AcesContext
   @Override
   public void prepare(TransactionLocks tlm)
       throws TransactionContextException, StorageException {
-    dataAccess.prepare(getRemoved(),getModified());
+    dataAccess.prepare(getRemoved(),getAdded(),getModified());
   }
   
   @Override
   Ace.PrimaryKey getKey(Ace ace) {
-    return new Ace.PrimaryKey(ace.getId(), ace.getInodeId());
+    return new Ace.PrimaryKey(ace.getInodeId(), ace.getIndex());
   }
 }

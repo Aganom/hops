@@ -23,10 +23,12 @@ import io.hops.common.IDsMonitor;
 import io.hops.exception.StorageException;
 import io.hops.exception.StorageInitializtionException;
 import io.hops.log.NDCWrapper;
+import io.hops.metadata.hdfs.dal.AceDataAccess;
 import io.hops.metadata.hdfs.dal.GroupDataAccess;
 import io.hops.metadata.hdfs.dal.HashBucketDataAccess;
 import io.hops.metadata.hdfs.dal.UserDataAccess;
 import io.hops.metadata.hdfs.dal.UserGroupDataAccess;
+import io.hops.metadata.hdfs.entity.Ace;
 import io.hops.metadata.hdfs.entity.HashBucket;
 import io.hops.resolvingcache.Cache;
 import io.hops.metadata.adaptor.BlockInfoDALAdaptor;
@@ -77,6 +79,7 @@ import io.hops.metadata.hdfs.entity.UnderReplicatedBlock;
 import io.hops.security.Users;
 import io.hops.security.UsersGroups;
 import io.hops.transaction.EntityManager;
+import io.hops.transaction.context.AcesContext;
 import io.hops.transaction.context.BlockChecksumContext;
 import io.hops.transaction.context.BlockInfoContext;
 import io.hops.transaction.context.ContextInitializer;
@@ -318,6 +321,7 @@ public class HdfsStorageFactory {
                 getDataAccess(OngoingSubTreeOpsDataAccess.class)));
 		entityContexts.put(HashBucket.class, new HashBucketContext(
         (HashBucketDataAccess) getDataAccess(HashBucketDataAccess.class)));
+		entityContexts.put(Ace.class, new AcesContext((AceDataAccess) getDataAccess(AceDataAccess.class)));
 
         return entityContexts;
       }

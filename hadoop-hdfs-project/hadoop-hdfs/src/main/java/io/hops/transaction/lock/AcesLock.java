@@ -32,7 +32,7 @@ public class AcesLock extends Lock {
         //Retrieve aces for inode
         if (inode.hasMoreAces()){
           // If more than two, do pruned index scan
-          acquireLockList(TransactionLockTypes.LockType.READ_COMMITTED, Ace.Finder.ByInodeId, inode.getId());
+          acquireLockList(TransactionLockTypes.LockType.WRITE, Ace.Finder.ByInodeId, inode.getId());
         } else {
           // Less than three, so get individual locks
           int[] ids;
@@ -41,7 +41,7 @@ public class AcesLock extends Lock {
           } else {
             ids = new int[] {0};
           }
-          acquireLock(TransactionLockTypes.LockType.WRITE, Ace.Finder.ByInodeIdAndAceIds, inode.getId(), ids);
+          acquireLockList(TransactionLockTypes.LockType.WRITE, Ace.Finder.ByInodeIdAndAceIds, inode.getId(), ids);
         }
       }
     }

@@ -26,6 +26,20 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.Arrays;
 
+import io.hops.transaction.handler.HDFSOperationType;
+import io.hops.transaction.handler.HopsTransactionalRequestHandler;
+import io.hops.transaction.lock.LockFactory;
+import io.hops.transaction.lock.TransactionLockTypes;
+import io.hops.transaction.lock.TransactionLocks;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AclStatus;
+import org.apache.hadoop.hdfs.DFSConfigKeys;
+import org.apache.hadoop.hdfs.DFSTestUtil;
+import org.apache.hadoop.hdfs.HdfsConfiguration;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hdfs.server.datanode.SimulatedFSDataset;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,31 +61,40 @@ public class TestFSPermissionChecker {
   private static final String SUPERGROUP = "supergroup";
   private static final String SUPERUSER = "superuser";
   private static final UserGroupInformation BRUCE =
-    UserGroupInformation.createUserForTesting("bruce", new String[] { });
+      UserGroupInformation.createUserForTesting("bruce", new String[] { });
   private static final UserGroupInformation DIANA =
-    UserGroupInformation.createUserForTesting("diana", new String[] { "sales" });
+      UserGroupInformation.createUserForTesting("diana", new String[] { "sales" });
   private static final UserGroupInformation CLARK =
-    UserGroupInformation.createUserForTesting("clark", new String[] { "execs" });
-
-  private INodeDirectory inodeRoot;
-
+      UserGroupInformation.createUserForTesting("clark", new String[] { "execs" });
+  
+  private Configuration conf;
+  private MiniDFSCluster cluster;
+  
   @Before
-  public void setUp() {
-    PermissionStatus permStatus = PermissionStatus.createImmutable(SUPERUSER,
-      SUPERGROUP, FsPermission.createImmutable((short)0755));
-//    inodeRoot = new INodeDirectory(INodeId.ROOT_INODE_ID,
-//      INodeDirectory.ROOT_NAME, permStatus, 0L);
+  public void setUp() throws IOException {
+    conf = new HdfsConfiguration();
+    conf.setBoolean(DFSConfigKeys.DFS_NAMENODE_ACLS_ENABLED_KEY, true);
+    SimulatedFSDataset.setFactory(conf);
+    //assume supergroup & superuser match
+    cluster = new MiniDFSCluster.Builder(conf).numDataNodes(1).build();
+    cluster.waitActive();
   }
-
+  
+  @After
+  public void tearDown() throws IOException {
+    cluster.getFileSystem().close();
+    cluster.shutdown();
+  }
+  
   @Test
   public void testAclOwner() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0640);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, NONE));
+    Path file1 = new Path("/file1");
+    createINodeFile( file1, "bruce", "execs", (short)0640);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, NONE));
     assertPermissionGranted(BRUCE, "/file1", READ);
     assertPermissionGranted(BRUCE, "/file1", WRITE);
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
@@ -80,17 +103,17 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/file1", WRITE);
     assertPermissionDenied(DIANA, "/file1", EXECUTE);
   }
-
+  
   @Test
   public void testAclNamedUser() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0640);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, USER, "diana", READ),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, NONE));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "execs", (short)0640);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, USER, "diana", READ),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, NONE));
     assertPermissionGranted(DIANA, "/file1", READ);
     assertPermissionDenied(DIANA, "/file1", WRITE);
     assertPermissionDenied(DIANA, "/file1", EXECUTE);
@@ -99,34 +122,34 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(DIANA, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclNamedUserDeny() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, USER, "diana", NONE),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, READ));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1,"bruce", "execs", (short)0644);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, USER, "diana", NONE),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, READ));
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/file1", READ);
     assertPermissionDenied(DIANA, "/file1", READ);
   }
-
+  
   @Test
   public void testAclNamedUserTraverseDeny() throws IOException {
-    INodeDirectory inodeDir = createINodeDirectory(inodeRoot, "dir1", "bruce",
-      "execs", (short)0755);
-    INodeFile inodeFile = createINodeFile(inodeDir, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeDir,
-      aclEntry(ACCESS, USER, ALL),
-      aclEntry(ACCESS, USER, "diana", NONE),
-      aclEntry(ACCESS, GROUP, READ_EXECUTE),
-      aclEntry(ACCESS, MASK, READ_EXECUTE),
-      aclEntry(ACCESS, OTHER, READ_EXECUTE));
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce","execs", (short)0755);
+    Path file1 = new Path(dir1,"file1");
+    createINodeFile(file1, "bruce", "execs", (short)0644);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "diana", NONE),
+        aclEntry(ACCESS, GROUP, READ_EXECUTE),
+        aclEntry(ACCESS, MASK, READ_EXECUTE),
+        aclEntry(ACCESS, OTHER, READ_EXECUTE));
     assertPermissionGranted(BRUCE, "/dir1/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/dir1/file1", READ);
     assertPermissionDenied(DIANA, "/dir1/file1", READ);
@@ -137,17 +160,17 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/dir1/file1", WRITE_EXECUTE);
     assertPermissionDenied(DIANA, "/dir1/file1", ALL);
   }
-
+  
   @Test
   public void testAclNamedUserMask() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0620);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, USER, "diana", READ),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, MASK, WRITE),
-      aclEntry(ACCESS, OTHER, NONE));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "execs", (short)0620);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, USER, "diana", READ),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, MASK, WRITE),
+        aclEntry(ACCESS, OTHER, NONE));
     assertPermissionDenied(DIANA, "/file1", READ);
     assertPermissionDenied(DIANA, "/file1", WRITE);
     assertPermissionDenied(DIANA, "/file1", EXECUTE);
@@ -156,16 +179,16 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(DIANA, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclGroup() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0640);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, NONE));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "execs", (short)0640);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, NONE));
     assertPermissionGranted(CLARK, "/file1", READ);
     assertPermissionDenied(CLARK, "/file1", WRITE);
     assertPermissionDenied(CLARK, "/file1", EXECUTE);
@@ -174,16 +197,16 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclGroupDeny() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "sales",
-      (short)0604);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, NONE),
-      aclEntry(ACCESS, MASK, NONE),
-      aclEntry(ACCESS, OTHER, READ));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "sales", (short)0604);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, NONE),
+        aclEntry(ACCESS, MASK, NONE),
+        aclEntry(ACCESS, OTHER, READ));
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/file1", READ);
     assertPermissionDenied(DIANA, "/file1", READ);
@@ -194,18 +217,18 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(DIANA, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclGroupTraverseDeny() throws IOException {
-    INodeDirectory inodeDir = createINodeDirectory(inodeRoot, "dir1", "bruce",
-      "execs", (short)0755);
-    INodeFile inodeFile = createINodeFile(inodeDir, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeDir,
-      aclEntry(ACCESS, USER, ALL),
-      aclEntry(ACCESS, GROUP, NONE),
-      aclEntry(ACCESS, MASK, NONE),
-      aclEntry(ACCESS, OTHER, READ_EXECUTE));
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce","execs", (short)0755);
+    Path file1 = new Path(dir1,"file1");
+    createINodeFile(file1, "bruce", "execs", (short)0644);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, GROUP, NONE),
+        aclEntry(ACCESS, MASK, NONE),
+        aclEntry(ACCESS, OTHER, READ_EXECUTE));
     assertPermissionGranted(BRUCE, "/dir1/file1", READ_WRITE);
     assertPermissionGranted(DIANA, "/dir1/file1", READ);
     assertPermissionDenied(CLARK, "/dir1/file1", READ);
@@ -216,21 +239,21 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/dir1/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/dir1/file1", ALL);
   }
-
+  
   @Test
   public void testAclGroupTraverseDenyOnlyDefaultEntries() throws IOException {
-    INodeDirectory inodeDir = createINodeDirectory(inodeRoot, "dir1", "bruce",
-      "execs", (short)0755);
-    INodeFile inodeFile = createINodeFile(inodeDir, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeDir,
-      aclEntry(ACCESS, USER, ALL),
-      aclEntry(ACCESS, GROUP, NONE),
-      aclEntry(ACCESS, OTHER, READ_EXECUTE),
-      aclEntry(DEFAULT, USER, ALL),
-      aclEntry(DEFAULT, GROUP, "sales", NONE),
-      aclEntry(DEFAULT, GROUP, NONE),
-      aclEntry(DEFAULT, OTHER, READ_EXECUTE));
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce","execs", (short)0755);
+    Path file1 = new Path(dir1,"file1");
+    createINodeFile(file1, "bruce", "execs", (short)0644);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, GROUP, NONE),
+        aclEntry(ACCESS, OTHER, READ_EXECUTE),
+        aclEntry(DEFAULT, USER, ALL),
+        aclEntry(DEFAULT, GROUP, "sales", NONE),
+        aclEntry(DEFAULT, GROUP, NONE),
+        aclEntry(DEFAULT, OTHER, READ_EXECUTE));
     assertPermissionGranted(BRUCE, "/dir1/file1", READ_WRITE);
     assertPermissionGranted(DIANA, "/dir1/file1", READ);
     assertPermissionDenied(CLARK, "/dir1/file1", READ);
@@ -241,16 +264,16 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/dir1/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/dir1/file1", ALL);
   }
-
+  
   @Test
   public void testAclGroupMask() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, READ_WRITE),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, READ));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "execs", (short)0644);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, READ_WRITE),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, READ));
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/file1", READ);
     assertPermissionDenied(CLARK, "/file1", WRITE);
@@ -260,17 +283,17 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclNamedGroup() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0640);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, GROUP, "sales", READ),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, NONE));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "execs", (short)0640);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, GROUP, "sales", READ),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, NONE));
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/file1", READ);
     assertPermissionGranted(DIANA, "/file1", READ);
@@ -280,17 +303,17 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/file1", READ_EXECUTE);
     assertPermissionDenied(DIANA, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclNamedGroupDeny() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "sales",
-      (short)0644);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, GROUP, "execs", NONE),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, READ));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "sales", (short)0644);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, GROUP, "execs", NONE),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, READ));
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
     assertPermissionGranted(DIANA, "/file1", READ);
     assertPermissionDenied(CLARK, "/file1", READ);
@@ -301,19 +324,19 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclNamedGroupTraverseDeny() throws IOException {
-    INodeDirectory inodeDir = createINodeDirectory(inodeRoot, "dir1", "bruce",
-      "execs", (short)0755);
-    INodeFile inodeFile = createINodeFile(inodeDir, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeDir,
-      aclEntry(ACCESS, USER, ALL),
-      aclEntry(ACCESS, GROUP, READ_EXECUTE),
-      aclEntry(ACCESS, GROUP, "sales", NONE),
-      aclEntry(ACCESS, MASK, READ_EXECUTE),
-      aclEntry(ACCESS, OTHER, READ_EXECUTE));
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce","execs", (short)0755);
+    Path file1 = new Path(dir1, "file1");
+    createINodeFile(file1, "bruce", "execs", (short)0644);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, GROUP, READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "sales", NONE),
+        aclEntry(ACCESS, MASK, READ_EXECUTE),
+        aclEntry(ACCESS, OTHER, READ_EXECUTE));
     assertPermissionGranted(BRUCE, "/dir1/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/dir1/file1", READ);
     assertPermissionDenied(DIANA, "/dir1/file1", READ);
@@ -324,17 +347,17 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/dir1/file1", WRITE_EXECUTE);
     assertPermissionDenied(DIANA, "/dir1/file1", ALL);
   }
-
+  
   @Test
   public void testAclNamedGroupMask() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "execs",
-      (short)0644);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, READ_WRITE),
-      aclEntry(ACCESS, GROUP, READ),
-      aclEntry(ACCESS, GROUP, "sales", READ_WRITE),
-      aclEntry(ACCESS, MASK, READ),
-      aclEntry(ACCESS, OTHER, READ));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "execs", (short)0644);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, READ_WRITE),
+        aclEntry(ACCESS, GROUP, READ),
+        aclEntry(ACCESS, GROUP, "sales", READ_WRITE),
+        aclEntry(ACCESS, MASK, READ),
+        aclEntry(ACCESS, OTHER, READ));
     assertPermissionGranted(BRUCE, "/file1", READ_WRITE);
     assertPermissionGranted(CLARK, "/file1", READ);
     assertPermissionGranted(DIANA, "/file1", READ);
@@ -345,17 +368,17 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(DIANA, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(DIANA, "/file1", ALL);
   }
-
+  
   @Test
   public void testAclOther() throws IOException {
-    INodeFile inodeFile = createINodeFile(inodeRoot, "file1", "bruce", "sales",
-      (short)0774);
-    addAcl(inodeFile,
-      aclEntry(ACCESS, USER, ALL),
-      aclEntry(ACCESS, USER, "diana", ALL),
-      aclEntry(ACCESS, GROUP, READ_WRITE),
-      aclEntry(ACCESS, MASK, ALL),
-      aclEntry(ACCESS, OTHER, READ));
+    Path file1 = new Path("/file1");
+    createINodeFile(file1, "bruce", "sales", (short)0774);
+    addAcl(file1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "diana", ALL),
+        aclEntry(ACCESS, GROUP, READ_WRITE),
+        aclEntry(ACCESS, MASK, ALL),
+        aclEntry(ACCESS, OTHER, READ));
     assertPermissionGranted(BRUCE, "/file1", ALL);
     assertPermissionGranted(DIANA, "/file1", ALL);
     assertPermissionGranted(CLARK, "/file1", READ);
@@ -366,50 +389,144 @@ public class TestFSPermissionChecker {
     assertPermissionDenied(CLARK, "/file1", WRITE_EXECUTE);
     assertPermissionDenied(CLARK, "/file1", ALL);
   }
-
-  private void addAcl(INode inode, AclEntry... acl)
+  
+  @Test
+  public void testInheritDefault() throws IOException {
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce", "sales", (short)0770);
+    Path file1 = new Path(dir1, "file1");
+    createINodeFile(file1, "bruce", "sales", (short)0770);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "clark", READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "execs", ALL),
+        aclEntry(ACCESS, GROUP, ALL),
+        aclEntry(ACCESS, OTHER, ALL),
+        aclEntry(DEFAULT, GROUP, "execs", READ),
+        aclEntry(DEFAULT, USER, "diana", NONE));
+    
+    assertPermissionGranted(CLARK, "/dir1/file1", READ);
+    assertPermissionDenied(DIANA, "/dir1/file1", READ);
+    assertPermissionDenied(CLARK, "/dir1/file1", WRITE);
+  }
+  
+  @Test
+  public void testInheritDefaultDeep() throws IOException {
+    Path dir1 = new Path("/dir1");
+    createINodeDirectory(dir1, "bruce", "sales", (short)0770);
+    Path dir2 = new Path(dir1, "dir2");
+    createINodeDirectory(dir2, "bruce", "sales", (short)0770);
+    Path file1 = new Path(dir2, "file1");
+    createINodeFile(file1, "bruce", "sales", (short)0770);
+    addAcl(dir1,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "clark", READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "execs", ALL),
+        aclEntry(ACCESS, GROUP, ALL),
+        aclEntry(ACCESS, OTHER, ALL),
+        aclEntry(DEFAULT, GROUP, "execs", READ),
+        aclEntry(DEFAULT, USER, "diana", NONE));
+    
+    addAcl(dir2,
+        aclEntry(ACCESS, USER, ALL),
+        aclEntry(ACCESS, USER, "clark", READ_EXECUTE),
+        aclEntry(ACCESS, GROUP, "execs", ALL),
+        aclEntry(ACCESS, GROUP, ALL),
+        aclEntry(ACCESS, OTHER, ALL),
+        aclEntry(DEFAULT, GROUP, "execs", NONE),
+        aclEntry(DEFAULT, USER, "diana", READ));
+    
+    assertPermissionDenied(CLARK, "/dir1/dir2/file1", READ);
+    assertPermissionGranted(DIANA, "/dir1/dir2/file1", READ);
+    assertPermissionDenied(CLARK, "/dir1/dir2/file1", WRITE);
+  }
+  
+  @Test
+  public void testInheritedBlockedByIntermediateDefault() throws IOException {
+  
+  }
+  
+  private void addAcl(final Path src, final AclEntry... acl)
       throws IOException {
-    AclStorage.updateINodeAcl(inode, Arrays.asList(acl));
+    new HopsTransactionalRequestHandler(HDFSOperationType.SET_ACL){
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(cluster.getNameNode(), TransactionLockTypes.INodeLockType.WRITE,
+            TransactionLockTypes.INodeResolveType.PATH, src.toString()));
+        locks.add(lf.getAcesLock());
+      }
+      
+      @Override
+      public Object performTask() throws IOException {
+        INode inode = cluster.getNamesystem().getINode(src.toString());
+        AclStorage.updateINodeAcl(inode, Arrays.asList(acl));
+        return null;
+      }
+    }.handle();
   }
-
-  private void assertPermissionGranted(UserGroupInformation user, String path,
-      FsAction access) throws IOException {
-    new FSPermissionChecker(SUPERUSER, SUPERGROUP, user).checkPermission(path,
-      inodeRoot, false, null, null, access, null);
+  
+  private void assertPermissionGranted(final UserGroupInformation user, final String path,
+      final FsAction access) throws IOException {
+    new HopsTransactionalRequestHandler(HDFSOperationType.CHECK_ACCESS){
+      @Override
+      public void acquireLock(TransactionLocks locks) throws IOException {
+        LockFactory lf = LockFactory.getInstance();
+        locks.add(lf.getINodeLock(cluster.getNameNode(), TransactionLockTypes.INodeLockType.READ,
+            TransactionLockTypes.INodeResolveType.PATH, path));
+        locks.add(lf.getAcesLock());
+      }
+      
+      @Override
+      public Object performTask() throws IOException {
+        INodeDirectory inodeRoot = cluster.getNamesystem().getFSDirectory().getRootDir();
+        new FSPermissionChecker(SUPERUSER, SUPERGROUP, user).checkPermission(path,
+            inodeRoot, false, null, null, access, null);
+        return null;
+      }
+    }.handle();
   }
-
-  private void assertPermissionDenied(UserGroupInformation user, String path,
-      FsAction access) throws IOException {
+  
+  private void assertPermissionDenied(final UserGroupInformation user, final String path,
+      final FsAction access) throws IOException {
     try {
-      new FSPermissionChecker(SUPERUSER, SUPERGROUP, user).checkPermission(path,
-        inodeRoot, false, null, null, access, null);
+      new HopsTransactionalRequestHandler(HDFSOperationType.CHECK_ACCESS){
+        @Override
+        public void acquireLock(TransactionLocks locks) throws IOException {
+          LockFactory lf = LockFactory.getInstance();
+          locks.add(lf.getINodeLock(cluster.getNameNode(), TransactionLockTypes.INodeLockType.READ,
+              TransactionLockTypes.INodeResolveType.PATH, path));
+          locks.add(lf.getAcesLock());
+        }
+        
+        @Override
+        public Object performTask() throws IOException {
+          INodeDirectory inodeRoot = cluster.getNamesystem().getFSDirectory().getRootDir();
+          new FSPermissionChecker(SUPERUSER, SUPERGROUP, user).checkPermission(path,
+              inodeRoot, false, null, null, access, null);
+          return null;
+        }
+      }.handle();
       fail("expected AccessControlException for user + " + user + ", path = " +
-        path + ", access = " + access);
+          path + ", access = " + access);
     } catch (AccessControlException e) {
       // expected
     }
   }
-
-  private static INodeDirectory createINodeDirectory(INodeDirectory parent,
-      String name, String owner, String group, short perm) throws IOException {
+  
+  private void createINodeDirectory(
+      Path src, String owner, String group, short perm) throws IOException {
     PermissionStatus permStatus = PermissionStatus.createImmutable(owner, group,
-      FsPermission.createImmutable(perm));
-//    INodeDirectory inodeDirectory = new INodeDirectory(
-//      INodeId.GRANDFATHER_INODE_ID, name.getBytes("UTF-8"), permStatus, 0L);
-//    parent.addChild(inodeDirectory);
-//    return inodeDirectory;
-    return null;
+        FsPermission.createImmutable(perm));
+    cluster.getNamesystem().mkdirs(src.toString(), permStatus, false);
+    cluster.getNamesystem().setOwner(src.toString(), owner, group);
+    cluster.getNamesystem().setPermission(src.toString(), FsPermission.createImmutable(perm));
   }
-
-  private static INodeFile createINodeFile(INodeDirectory parent, String name,
+  
+  private void createINodeFile(Path src,
       String owner, String group, short perm) throws IOException {
-    PermissionStatus permStatus = PermissionStatus.createImmutable(owner, group,
-      FsPermission.createImmutable(perm));
-//    INodeFile inodeFile = new INodeFile(INodeId.GRANDFATHER_INODE_ID,
-//      name.getBytes("UTF-8"), permStatus, 0L, 0L, null, REPLICATION,
-//      PREFERRED_BLOCK_SIZE);
-//    parent.addChild(inodeFile);
-//    return inodeFile;
-    return null;
+    DFSTestUtil.createFile(cluster.getFileSystem(), src, 0,(short)1, 0L);
+    cluster.getNamesystem().setOwner(src.toString(), owner, group);
+    cluster.getNamesystem().setPermission(src.toString(), FsPermission.createImmutable(perm));
   }
 }

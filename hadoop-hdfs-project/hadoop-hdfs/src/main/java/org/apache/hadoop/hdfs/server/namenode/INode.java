@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.PermissionStatus;
 import org.apache.hadoop.hdfs.DFSUtil;
+import org.apache.hadoop.hdfs.protocol.AclException;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockStoragePolicySuite;
 import org.apache.hadoop.util.StringUtils;
@@ -304,15 +305,15 @@ public abstract class INode implements Comparable<byte[]> {
     return this.id;
   }
 
-  public AclFeature getAclFeature() throws TransactionContextException, StorageException {
+  public AclFeature getAclFeature() throws TransactionContextException, StorageException, AclException {
     return INodeAclHelper.getAclFeature(this);
   }
 
-  public void addAclFeature(AclFeature aclFeature) throws TransactionContextException, StorageException {
+  public void addAclFeature(AclFeature aclFeature) throws TransactionContextException, StorageException, AclException {
     INodeAclHelper.addAclFeature(this, aclFeature);
   }
   
-  public void removeAclFeature(){
+  public void removeAclFeature() throws TransactionContextException, StorageException {
     INodeAclHelper.removeAclFeature(this);
   }
   
@@ -321,7 +322,7 @@ public abstract class INode implements Comparable<byte[]> {
   }
   
   public boolean hasMoreAces(){
-    return this.hasMoreAces();
+    return this.hasMoreAces;
   }
   
   /**

@@ -68,7 +68,8 @@ final class AclStorage {
    *
    * @param child INode newly created child
    */
-  public static void copyINodeDefaultAcl(INode child) throws TransactionContextException, StorageException {
+  public static void copyINodeDefaultAcl(INode child) throws TransactionContextException, StorageException,
+      AclException {
     INodeDirectory parent = child.getParent();
     AclFeature parentAclFeature = parent.getAclFeature();
     if (parentAclFeature == null || !(child.isFile() || child.isDirectory())) {
@@ -148,10 +149,10 @@ final class AclStorage {
    * supports querying by snapshot ID.
    *
    * @param inode INode to read
-   * @param snapshotId int ID of snapshot to read
    * @return List<AclEntry> containing extended inode ACL entries
    */
-  public static List<AclEntry> readINodeAcl(INode inode) throws TransactionContextException, StorageException {
+  public static List<AclEntry> readINodeAcl(INode inode)
+      throws TransactionContextException, StorageException, AclException {
     AclFeature f = inode.getAclFeature();
     return f == null ? ImmutableList.<AclEntry> of() : f.getEntries();
   }
@@ -170,7 +171,8 @@ final class AclStorage {
    * @param inode INode to read
    * @return List<AclEntry> containing all logical inode ACL entries
    */
-  public static List<AclEntry> readINodeLogicalAcl(INode inode) throws TransactionContextException, StorageException {
+  public static List<AclEntry> readINodeLogicalAcl(INode inode)
+      throws TransactionContextException, StorageException, AclException {
     FsPermission perm = inode.getFsPermission();
     AclFeature f = inode.getAclFeature();
     if (f == null) {
@@ -224,16 +226,15 @@ final class AclStorage {
    * Completely removes the ACL from an inode.
    *
    * @param inode INode to update
-   * @param snapshotId int latest snapshot ID of inode
    * @throws QuotaExceededException if quota limit is exceeded
    */
   public static void removeINodeAcl(INode inode)
-      throws QuotaExceededException, TransactionContextException, StorageException {
-    AclFeature f = inode.getAclFeature();
-    if (f == null) {
+      throws QuotaExceededException, TransactionContextException, StorageException, AclException {
+    if (!inode.hasOwnAcl()){
       return;
     }
 
+    AclFeature f = inode.getAclFeature();
     FsPermission perm = inode.getFsPermission();
     List<AclEntry> featureEntries = f.getEntries();
     if (featureEntries.get(0).getScope() == AclEntryScope.ACCESS) {
@@ -260,7 +261,6 @@ final class AclStorage {
    *
    * @param inode INode to update
    * @param newAcl List<AclEntry> containing new ACL entries
-   * @param snapshotId int latest snapshot ID of inode
    * @throws AclException if the ACL is invalid for the given inode
    * @throws QuotaExceededException if quota limit is exceeded
    */
@@ -282,14 +282,14 @@ final class AclStorage {
       }
 
       // Attach entries to the feature.
-      if (inode.getAclFeature() != null) {
+      if (inode.hasOwnAcl()){
         inode.removeAclFeature();//snapshotId);
       }
       inode.addAclFeature(createAclFeature(accessEntries, defaultEntries));//,snapshotId);
       newPerm = createFsPermissionForExtendedAcl(accessEntries, perm);
     } else {
       // This is a minimal ACL.  Remove the ACL feature if it previously had one.
-      if (inode.getAclFeature() != null) {
+      if (inode.hasOwnAcl()) {
         inode.removeAclFeature();//snapshotId);
       }
       newPerm = createFsPermissionForMinimalAcl(newAcl, perm);
