@@ -224,9 +224,7 @@ public class INodeDALAdaptor
       }
     }
     hopINode.setHeader(inode.getHeader());
-    hopINode.setHasAce1(inode.hasAce1());
-    hopINode.setHasAce2(inode.hasAce2());
-    hopINode.setHasMoreAces(inode.hasMoreAces());
+    hopINode.setNumAces(inode.getNumAces());
     return hopINode;
   }
 
@@ -284,9 +282,7 @@ public class INodeDALAdaptor
         inode.setPartitionIdNoPersistance(hopINode.getPartitionId());
         inode.setLogicalTimeNoPersistance(hopINode.getLogicalTime());
         inode.setBlockStoragePolicyIDNoPersistance(hopINode.getStoragePolicy());
-        inode.setHasAce1NoPersistence(hopINode.hasAce1());
-        inode.setHasAce2NoPersistence(hopINode.hasAce2());
-        inode.setHasMoreAcesNoPersistence(hopINode.hasMoreAces());
+        inode.setNumAcesNoPersistence(hopINode.getNumAces());
       }
       return inode;
     } catch (IOException ex) {

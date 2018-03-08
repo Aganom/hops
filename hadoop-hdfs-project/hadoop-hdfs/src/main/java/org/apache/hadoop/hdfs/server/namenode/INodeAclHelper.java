@@ -39,27 +39,17 @@ public class INodeAclHelper {
    *
    * @param inode
    * @return
-   */
-  static boolean hasOwnAcl(INode inode) {
-    //Aces are always populated in order: ace1, ace2 and "hasMoreAces",
-    //so checking the first is sufficient
-    return inode.hasAce1();
-  }
-  
-  /**
-   *
-   * @param inode
-   * @return
    * @throws TransactionContextException
    * @throws StorageException
    */
   static AclFeature getAclFeature(INode inode) throws TransactionContextException, StorageException, AclException {
-    List<Ace> result = getAces(inode);
+    Collection<Ace> result = getAces(inode);
     if (result == null){
       return null;
     }
-    Collections.sort(result, Ace.Order.ByIndexAscending);
-    return new AclFeature(convert(result));
+    ArrayList<Ace> asList = Lists.newArrayList(result);
+    Collections.sort(asList, Ace.Order.ByIndexAscending);
+    return new AclFeature(convert(asList));
   }
   
   /**
@@ -72,31 +62,18 @@ public class INodeAclHelper {
   static void addAclFeature(INode inode, AclFeature aclFeature)
       throws TransactionContextException, StorageException, AclException {
     List<AclEntry> entries = aclFeature.getEntries();
-    for (AclEntry entry : entries) {
-      if (entry.getName() == null || entry.getName().isEmpty()){
-        throw new RuntimeException();
-      }
-    }
+    
+    checkNoUnnamedDefaults(entries);
+    
     int inodeId = inode.getId();
-    if (!entries.isEmpty()){
-      inode.setHasAce1NoPersistence(true);
-      EntityManager.update(convert(entries.get(0), inodeId, 0));
+    for (int i = 0 ; i < entries.size() ; i++){
+      EntityManager.update(convert(entries.get(i), inodeId, i));
     }
-    if (entries.size() > 1){
-      inode.setHasAce2NoPersistence(true);
-      EntityManager.update(convert(entries.get(1), inodeId, 1));
-    }
-    if (entries.size() > 2) {
-      for (int i = 2 ; i < entries.size() ; i++){
-        EntityManager.update(convert(entries.get(i), inodeId, i));
-      }
-      inode.setHasMoreAcesNoPersistence(true);
-    }
-    inode.save();
+    inode.setNumAces(entries.size());
   }
   
   public static void removeAclFeature(INode inode) throws TransactionContextException, StorageException {
-    assert inode.hasAce1();
+    assert inode.getNumAces() > 0;
     Collection<Ace> aces = getOwnAces(inode);
     if (aces == null){
       return;
@@ -105,40 +82,38 @@ public class INodeAclHelper {
     for (Ace ace : aces) {
       EntityManager.remove(ace);
     }
-    inode.setHasAce1(false);
-    inode.setHasAce2(false);
-    inode.setHasMoreAces(false);
-    inode.save();
+    inode.setNumAces(0);
   }
   
-  private static List<Ace> getAces(INode inode) throws TransactionContextException, StorageException {
+  private static void checkNoUnnamedDefaults(List<AclEntry> entries) throws AclException {
+    for (AclEntry entry : entries) {
+      if (entry.getScope().equals(AclEntryScope.DEFAULT) &&
+          (entry.getName() == null || entry.getName().isEmpty())){
+        throw new AclException("HOPS does not allow unnamed DEFAULT entries.");
+      }
+    }
+  }
+  
+  private static Collection<Ace> getAces(INode inode) throws TransactionContextException, StorageException {
     Collection<Ace> aces;
     
-    if (inode.hasOwnAcl()){
+    if (inode.getNumAces() > 0){
       aces = getOwnAces(inode);
     } else {
       //Check for inherited aces
       aces = getInheritedDefaultAcesAsAccess(inode.getParent());
     }
     
-    if (aces == null){
-      return null;
-    }
-    
-    return Lists.newArrayList(aces);
+    return aces;
   }
   
   private static Collection<Ace> getOwnAces(INode inode) throws TransactionContextException, StorageException {
-    assert inode.hasOwnAcl();
-    Collection<Ace> aces;
-    if (inode.hasMoreAces()){
-      //Get by pruned index scan all the aces
-      aces = getAllAces(inode);
-    } else {
-      //Get by primary key up to two aces
-      aces = getCachedAces(inode);
+    assert inode.getNumAces() > 0;
+    int[] indices = new int[inode.getNumAces()];
+    for (int i = 0 ; i < inode.getNumAces() ; i++){
+      indices[i] = i;
     }
-    return aces;
+    return EntityManager.findList(Ace.Finder.ByInodeIdAndIndices, inode.getId(), indices);
   }
   
   private static Collection<Ace> getInheritedDefaultAcesAsAccess(INode inode)
@@ -147,7 +122,7 @@ public class INodeAclHelper {
       return null;
     }
     
-    if(inode.hasOwnAcl()){
+    if(inode.getNumAces() > 0){
       Collection<Ace> ownAces = getOwnAces(inode);
       Collection<Ace> defaultAces = new ArrayList<>();
       
@@ -173,22 +148,6 @@ public class INodeAclHelper {
     return getInheritedDefaultAcesAsAccess(inode.getParent());
   }
   
-  private static Collection<Ace> getCachedAces(INode inode) throws TransactionContextException, StorageException {
-    assert inode.hasAce1();
-    
-    int[] ids;
-    if (inode.hasAce2()){
-      ids = new int[]{0,1};
-    } else {
-      ids = new int[]{0};
-    }
-    return EntityManager.findList(Ace.Finder.ByInodeIdAndAceIds, inode.getId(), ids);
-  }
-  
-  private static Collection<Ace> getAllAces(INode inode) throws TransactionContextException, StorageException {
-    return EntityManager.findList(Ace.Finder.ByInodeId, inode.getId());
-  }
-  
   private static Ace convert(AclEntry entry, int inodeId, int index) throws AclException {
     return new Ace(inodeId,
         index,
@@ -204,8 +163,13 @@ public class INodeAclHelper {
         return Ace.AceType.USER;
       case GROUP:
         return Ace.AceType.GROUP;
+      case MASK:
+        return Ace.AceType.MASK;
+      case OTHER:
+        return Ace.AceType.OTHER;
       default:
-        throw new AclException("Unexpected acl entry type " + type.toString() + ", should be USER or GROUP.");
+        throw new AclException("Unexpected acl entry type " + type.toString()
+            + ", should be USER, GROUP, MASK or " + "OTHER");
     }
   }
   
@@ -215,8 +179,13 @@ public class INodeAclHelper {
         return AclEntryType.USER;
       case GROUP:
         return AclEntryType.GROUP;
+      case MASK:
+        return AclEntryType.MASK;
+      case OTHER:
+        return AclEntryType.OTHER;
       default:
-        throw new AclException("Unexpected ace type " + type.toString() + ", should be USER or GROUP.");
+        throw new AclException("Unexpected ace type " + type.toString()
+            + ", should be USER, GROUP, MASK or OTHER");
       
     }
   }

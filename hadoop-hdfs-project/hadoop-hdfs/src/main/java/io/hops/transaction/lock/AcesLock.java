@@ -28,21 +28,13 @@ public class AcesLock extends Lock {
   protected void acquire(TransactionLocks locks) throws IOException {
     BaseINodeLock inodeLock = (BaseINodeLock) locks.getLock(Type.INode);
     for (INode inode : inodeLock.getAllResolvedINodes()){
-      if(inode.hasOwnAcl()){
+      if(inode.getNumAces() > 0){
         //Retrieve aces for inode
-        if (inode.hasMoreAces()){
-          // If more than two, do pruned index scan
-          acquireLockList(TransactionLockTypes.LockType.WRITE, Ace.Finder.ByInodeId, inode.getId());
-        } else {
-          // Less than three, so get individual locks
-          int[] ids;
-          if (inode.hasAce2()){
-            ids = new int[] {0,1};
-          } else {
-            ids = new int[] {0};
-          }
-          acquireLockList(TransactionLockTypes.LockType.WRITE, Ace.Finder.ByInodeIdAndAceIds, inode.getId(), ids);
+        int[] indices = new int[inode.getNumAces()];
+        for (int i = 0 ; i < inode.getNumAces() ; i++ ){
+          indices[i] = i;
         }
+        acquireLockList(TransactionLockTypes.LockType.WRITE, Ace.Finder.ByInodeIdAndIndices, inode.getId(), indices);
       }
     }
   }

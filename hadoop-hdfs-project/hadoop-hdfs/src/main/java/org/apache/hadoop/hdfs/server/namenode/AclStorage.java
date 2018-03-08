@@ -230,7 +230,7 @@ final class AclStorage {
    */
   public static void removeINodeAcl(INode inode)
       throws QuotaExceededException, TransactionContextException, StorageException, AclException {
-    if (!inode.hasOwnAcl()){
+    if (!(inode.getNumAces() > 0)){
       return;
     }
 
@@ -282,14 +282,14 @@ final class AclStorage {
       }
 
       // Attach entries to the feature.
-      if (inode.hasOwnAcl()){
+      if (inode.getNumAces() > 0){
         inode.removeAclFeature();//snapshotId);
       }
       inode.addAclFeature(createAclFeature(accessEntries, defaultEntries));//,snapshotId);
       newPerm = createFsPermissionForExtendedAcl(accessEntries, perm);
     } else {
       // This is a minimal ACL.  Remove the ACL feature if it previously had one.
-      if (inode.hasOwnAcl()) {
+      if (inode.getNumAces() > 0) {
         inode.removeAclFeature();//snapshotId);
       }
       newPerm = createFsPermissionForMinimalAcl(newAcl, perm);

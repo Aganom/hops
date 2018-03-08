@@ -45,30 +45,11 @@ public class AcesContext
       throws TransactionContextException, StorageException {
     Ace.Finder aceFinder = (Ace.Finder) finder;
     switch (aceFinder){
-      case ByInodeId:
-        return findByInodeId(aceFinder, params);
-      case ByInodeIdAndAceIds:
+      case ByInodeIdAndIndices:
         return findByPKBatched(aceFinder, params);
       default:
         throw new RuntimeException(UNSUPPORTED_FINDER);
     }
-  }
-  
-  private Collection<Ace> findByInodeId(Ace.Finder aceFinder, Object[] params)
-      throws StorageCallPreventedException, StorageException {
-    final Integer inodeId = (Integer) params[0];
-    List<Ace> result;
-    if (inodeAces.containsKey(inodeId)) {
-      result = inodeAces.get(inodeId);
-      hit(aceFinder, result, "inodeId", inodeId);
-    } else {
-      aboutToAccessStorage(aceFinder, params);
-      result = dataAccess.getAcesByInodeId(inodeId);
-      inodeAces.put(inodeId, result);
-      gotFromDB(result);
-      miss(aceFinder, result, "inodeId", inodeId);
-    }
-    return result;
   }
   
   private Collection<Ace> findByPKBatched(Ace.Finder aceFinder, Object[] params)

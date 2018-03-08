@@ -230,10 +230,8 @@ public abstract class INode implements Comparable<byte[]> {
 
   private int logicalTime;
   
-  private boolean hasAce1;
-  private boolean hasAce2;
-  private boolean hasMoreAces;
-
+  private int numAces;
+  
   /**
    * The inode id
    */
@@ -315,14 +313,6 @@ public abstract class INode implements Comparable<byte[]> {
   
   public void removeAclFeature() throws TransactionContextException, StorageException {
     INodeAclHelper.removeAclFeature(this);
-  }
-  
-  public boolean hasOwnAcl(){
-    return INodeAclHelper.hasOwnAcl(this);
-  }
-  
-  public boolean hasMoreAces(){
-    return this.hasMoreAces;
   }
   
   /**
@@ -834,39 +824,17 @@ public abstract class INode implements Comparable<byte[]> {
     save();
   }
   
-  public void setHasAce1(boolean hasAce1) throws TransactionContextException, StorageException {
-    setHasAce1NoPersistence(hasAce1);
+  public int getNumAces(){
+    return numAces;
+  }
+  
+  public void setNumAces(int numAces) throws TransactionContextException, StorageException {
+    setNumAcesNoPersistence(numAces);
     save();
   }
   
-  public void setHasAce1NoPersistence(boolean hasAce1){
-    this.hasAce1 = hasAce1;
-  }
-  
-  public boolean hasAce1(){
-    return this.hasAce1;
-  }
-  
-  public void setHasAce2(boolean hasAce2) throws TransactionContextException, StorageException {
-    setHasAce2NoPersistence(hasAce2);
-    save();
-  }
-  
-  public void setHasAce2NoPersistence(boolean hasAce2) {
-    this.hasAce2 = hasAce2;
-  }
-  
-  public boolean hasAce2() {
-    return this.hasAce2;
-  }
-  
-  public void setHasMoreAces(boolean hasMoreAces) throws TransactionContextException, StorageException {
-    setHasMoreAcesNoPersistence(hasMoreAces);
-    save();
-  }
-  
-  public void setHasMoreAcesNoPersistence(boolean hasMoreAces){
-    this.hasMoreAces = hasMoreAces;
+  public void setNumAcesNoPersistence(int numAces){
+    this.numAces = numAces;
   }
   
   public void inTree() {
