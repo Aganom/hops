@@ -65,6 +65,7 @@ public class AcesContext
       aboutToAccessStorage(aceFinder, params);
       result = dataAccess.getAcesByInodeId(inodeId);
       inodeAces.put(inodeId, result);
+      gotFromDB(result);
       miss(aceFinder, result, "inodeId", inodeId);
     }
     return result;
