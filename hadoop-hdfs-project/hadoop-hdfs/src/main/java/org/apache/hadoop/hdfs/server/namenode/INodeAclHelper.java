@@ -43,7 +43,7 @@ public class INodeAclHelper {
    * @throws StorageException
    */
   static AclFeature getAclFeature(INode inode) throws TransactionContextException, StorageException, AclException {
-    Collection<Ace> result = getAces(inode);
+    Collection<Ace> result = getOwnAces(inode);//getAces(inode);
     if (result == null){
       return null;
     }
@@ -63,7 +63,7 @@ public class INodeAclHelper {
       throws TransactionContextException, StorageException, AclException {
     List<AclEntry> entries = aclFeature.getEntries();
     
-    checkNoUnnamedDefaults(entries);
+    //checkNoUnnamedDefaults(entries);
     
     int inodeId = inode.getId();
     for (int i = 0 ; i < entries.size() ; i++){

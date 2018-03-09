@@ -98,7 +98,7 @@ final class AclTransformation {
         }
       }
     }
-    copyDefaultsIfNeeded(aclBuilder);
+    //copyDefaultsIfNeeded(aclBuilder);
     calculateMasks(aclBuilder, providedMask, maskDirty, scopeDirty);
     return buildAndValidateAcl(aclBuilder);
   }

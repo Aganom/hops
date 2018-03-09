@@ -375,7 +375,7 @@ final class AclStorage {
    * @return List<AclEntry> containing exactly 3 entries representing the owner,
    *   group and other permissions
    */
-  private static List<AclEntry> getMinimalAcl(FsPermission perm) {
+  public static List<AclEntry> getMinimalAcl(FsPermission perm) {
     return Lists.newArrayList(
       new AclEntry.Builder()
         .setScope(AclEntryScope.ACCESS)
