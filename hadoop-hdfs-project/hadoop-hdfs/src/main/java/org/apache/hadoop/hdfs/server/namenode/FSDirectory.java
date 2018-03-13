@@ -2193,7 +2193,7 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
     } else {
       existingAcl = AclStorage.readINodeLogicalAcl(inode);
     }
-    //List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    //existingAcl = AclStorage.readINodeLogicalAcl(inode);
     List<AclEntry> newAcl = AclTransformation.mergeAclEntries(existingAcl,
       aclSpec);
     AclStorage.updateINodeAcl(inode, newAcl);

@@ -22,6 +22,7 @@ import io.hops.exception.StorageException;
 import io.hops.exception.TransactionContextException;
 import io.hops.metadata.hdfs.entity.Ace;
 import io.hops.transaction.EntityManager;
+import org.apache.avro.generic.GenericData;
 import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.AclEntryScope;
 import org.apache.hadoop.fs.permission.AclEntryType;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class INodeAclHelper {
   
@@ -43,7 +45,8 @@ public class INodeAclHelper {
    * @throws StorageException
    */
   static AclFeature getAclFeature(INode inode) throws TransactionContextException, StorageException, AclException {
-    Collection<Ace> result = getOwnAces(inode);//getAces(inode);
+    Collection<Ace> result = getAces(inode);
+    //Collection<Ace> result = getOwnAces(inode);
     if (result == null){
       return null;
     }
@@ -63,7 +66,8 @@ public class INodeAclHelper {
       throws TransactionContextException, StorageException, AclException {
     List<AclEntry> entries = aclFeature.getEntries();
     
-    //checkNoUnnamedDefaults(entries);
+    entries = filterUnnamedEntries(entries);
+    // checkNoUnnamedDefaults(entries);
     
     int inodeId = inode.getId();
     for (int i = 0 ; i < entries.size() ; i++){
@@ -83,6 +87,19 @@ public class INodeAclHelper {
       EntityManager.remove(ace);
     }
     inode.setNumAces(0);
+  }
+  
+  private static List<AclEntry> filterUnnamedEntries(List<AclEntry> entries){
+    List<AclEntry> unnamedRemoved = Lists.newArrayList();
+    for (AclEntry entry : entries) {
+      if (entry.getScope().equals(AclEntryScope.DEFAULT) &&
+          (entry.getName() == null || entry.getName().isEmpty())){
+        continue;
+      }
+      
+      unnamedRemoved.add(entry);
+    }
+    return unnamedRemoved;
   }
   
   private static void checkNoUnnamedDefaults(List<AclEntry> entries) throws AclException {
