@@ -2186,14 +2186,7 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
   private List<AclEntry> unprotectedModifyAclEntries(String src,
       List<AclEntry> aclSpec) throws IOException {
     INode inode = getINode(src);
-    List<AclEntry> existingAcl;
-    if (!(inode.getNumAces() > 0)){
-      //inode has no own acl
-      existingAcl = AclStorage.getMinimalAcl(inode.getFsPermission());
-    } else {
-      existingAcl = AclStorage.readINodeLogicalAcl(inode);
-    }
-    //existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
     List<AclEntry> newAcl = AclTransformation.mergeAclEntries(existingAcl,
       aclSpec);
     AclStorage.updateINodeAcl(inode, newAcl);

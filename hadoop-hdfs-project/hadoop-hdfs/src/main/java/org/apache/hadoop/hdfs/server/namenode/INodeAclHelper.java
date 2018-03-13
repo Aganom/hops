@@ -153,9 +153,11 @@ public class INodeAclHelper {
         //We found aces to inherit, return them converted
         Collection<Ace> convertedToAccess = new ArrayList<>();
         for (Ace defaultAce : defaultAces) {
-          Ace access = defaultAce.copy();
-          access.setIsDefault(false);
-          convertedToAccess.add(access);
+          if (defaultAce.getSubject() != null && !defaultAce.getSubject().isEmpty()){
+            Ace access = defaultAce.copy();
+            access.setIsDefault(false);
+            convertedToAccess.add(access);
+          }
         }
         return convertedToAccess;
       }
