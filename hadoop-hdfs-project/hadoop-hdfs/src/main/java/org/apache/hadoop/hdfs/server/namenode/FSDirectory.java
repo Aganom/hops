@@ -2186,7 +2186,13 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
   private List<AclEntry> unprotectedModifyAclEntries(String src,
       List<AclEntry> aclSpec) throws IOException {
     INode inode = getINode(src);
-    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> existingAcl;
+    if (AclStorage.hasOwnAcl(inode)){
+      existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    } else {
+      existingAcl = AclStorage.getMinimalAcl(inode);
+    }
+    
     List<AclEntry> newAcl = AclTransformation.mergeAclEntries(existingAcl,
       aclSpec);
     AclStorage.updateINodeAcl(inode, newAcl);
@@ -2200,11 +2206,12 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
   private List<AclEntry> unprotectedRemoveAclEntries(String src,
       List<AclEntry> aclSpec) throws IOException {
     INode inode = getINode(src);
-    if (!(inode.getNumAces() > 0)){
-      //Inode has no own acl, return logical acl without modifications.
-      return AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> existingAcl;
+    if (AclStorage.hasOwnAcl(inode)){
+      existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    } else {
+      existingAcl = AclStorage.getMinimalAcl(inode);
     }
-    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
     List<AclEntry> newAcl = AclTransformation.filterAclEntriesByAclSpec(
       existingAcl, aclSpec);
     AclStorage.updateINodeAcl(inode, newAcl);
@@ -2218,7 +2225,12 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
   private List<AclEntry> unprotectedRemoveDefaultAcl(String src)
       throws IOException {
     INode inode = getINode(src);
-    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> existingAcl;
+    if (AclStorage.hasOwnAcl(inode)){
+      existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    } else {
+      existingAcl = AclStorage.getMinimalAcl(inode);
+    }
     List<AclEntry> newAcl = AclTransformation.filterDefaultAclEntries(
       existingAcl);
     AclStorage.updateINodeAcl(inode, newAcl);
@@ -2247,7 +2259,12 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
     }
     
     INode inode = getINode(src);
-    List<AclEntry> existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    List<AclEntry> existingAcl;
+    if (AclStorage.hasOwnAcl(inode)){
+      existingAcl = AclStorage.readINodeLogicalAcl(inode);
+    } else {
+      existingAcl = AclStorage.getMinimalAcl(inode);
+    }
     List<AclEntry> newAcl = AclTransformation.replaceAclEntries(existingAcl, aclSpec);
     AclStorage.updateINodeAcl(inode, newAcl);
     return newAcl;

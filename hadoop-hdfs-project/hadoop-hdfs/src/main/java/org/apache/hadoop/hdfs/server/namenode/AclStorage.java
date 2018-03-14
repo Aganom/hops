@@ -156,6 +156,10 @@ final class AclStorage {
     AclFeature f = inode.getAclFeature();
     return f == null ? ImmutableList.<AclEntry> of() : f.getEntries();
   }
+  
+  public static boolean hasOwnAcl(INode inode){
+    return inode.getNumAces() > 0;
+  }
 
   /**
    * Reads the existing ACL of an inode.  This method always returns the full
@@ -367,6 +371,10 @@ final class AclStorage {
       accessEntries.get(2).getPermission(),
       existingPerm.getStickyBit());
   }
+  
+  public static List<AclEntry> getMinimalAcl(INode inode){
+    return getMinimalAcl(inode.getFsPermission());
+  }
 
   /**
    * Translates the given permission bits to the equivalent minimal ACL.
@@ -375,7 +383,7 @@ final class AclStorage {
    * @return List<AclEntry> containing exactly 3 entries representing the owner,
    *   group and other permissions
    */
-  public static List<AclEntry> getMinimalAcl(FsPermission perm) {
+  private static List<AclEntry> getMinimalAcl(FsPermission perm) {
     return Lists.newArrayList(
       new AclEntry.Builder()
         .setScope(AclEntryScope.ACCESS)
