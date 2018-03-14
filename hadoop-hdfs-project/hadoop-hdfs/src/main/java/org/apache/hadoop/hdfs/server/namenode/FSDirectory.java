@@ -2185,6 +2185,8 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 
   private List<AclEntry> unprotectedModifyAclEntries(String src,
       List<AclEntry> aclSpec) throws IOException {
+    AclStorage.validateAclSpec(aclSpec);
+  
     INode inode = getINode(src);
     List<AclEntry> existingAcl;
     if (AclStorage.hasOwnAcl(inode)){
@@ -2205,6 +2207,8 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 
   private List<AclEntry> unprotectedRemoveAclEntries(String src,
       List<AclEntry> aclSpec) throws IOException {
+    AclStorage.validateAclSpec(aclSpec);
+  
     INode inode = getINode(src);
     List<AclEntry> existingAcl;
     if (AclStorage.hasOwnAcl(inode)){
@@ -2252,6 +2256,8 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 
   List<AclEntry> unprotectedSetAcl(String src, List<AclEntry> aclSpec)
       throws IOException {
+    AclStorage.validateAclSpec(aclSpec);
+  
     // ACL removal is logged to edits as OP_SET_ACL with an empty list.
     if (aclSpec.isEmpty()) {
       unprotectedRemoveAcl(src);

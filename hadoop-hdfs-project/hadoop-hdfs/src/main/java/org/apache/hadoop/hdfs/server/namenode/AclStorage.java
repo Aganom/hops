@@ -293,7 +293,7 @@ final class AclStorage {
       newPerm = createFsPermissionForExtendedAcl(accessEntries, perm);
     } else {
       // This is a minimal ACL.  Remove the ACL feature if it previously had one.
-      if (inode.getNumAces() > 0) {
+      if (hasOwnAcl(inode)) {
         inode.removeAclFeature();//snapshotId);
       }
       newPerm = createFsPermissionForMinimalAcl(newAcl, perm);
@@ -411,5 +411,23 @@ final class AclStorage {
    */
   private static boolean isMinimalAcl(List<AclEntry> entries) {
     return entries.size() == 3;
+  }
+  
+  public static void validateAclSpec(List<AclEntry> aclSpec) throws AclException{
+    for (AclEntry aclEntry : aclSpec) {
+      if (aclEntry.getScope().equals(AclEntryScope.DEFAULT)
+          && (aclEntry.getName() == null || aclEntry.getName().isEmpty())){
+        switch (aclEntry.getType()){
+          case USER:
+          case OTHER:
+          case MASK:
+            throw new AclException("HOPS: No default USER (unnamed), OTHER or MASK entries allowed");
+          case GROUP:
+            //Unnamed default group is expected.
+          default:
+            //do nothing.
+        }
+      }
+    }
   }
 }

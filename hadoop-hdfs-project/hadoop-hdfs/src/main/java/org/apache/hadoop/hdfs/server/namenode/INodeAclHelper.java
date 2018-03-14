@@ -22,7 +22,6 @@ import io.hops.exception.StorageException;
 import io.hops.exception.TransactionContextException;
 import io.hops.metadata.hdfs.entity.Ace;
 import io.hops.transaction.EntityManager;
-import org.apache.avro.generic.GenericData;
 import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.AclEntryScope;
 import org.apache.hadoop.fs.permission.AclEntryType;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class INodeAclHelper {
   
@@ -66,7 +64,7 @@ public class INodeAclHelper {
       throws TransactionContextException, StorageException, AclException {
     List<AclEntry> entries = aclFeature.getEntries();
     
-    entries = filterUnnamedEntries(entries);
+    entries = filterUnnamedNonGroupEntries(entries);
     // checkNoUnnamedDefaults(entries);
     
     int inodeId = inode.getId();
@@ -89,14 +87,15 @@ public class INodeAclHelper {
     inode.setNumAces(0);
   }
   
-  private static List<AclEntry> filterUnnamedEntries(List<AclEntry> entries){
+  private static List<AclEntry> filterUnnamedNonGroupEntries(List<AclEntry> entries){
     List<AclEntry> unnamedRemoved = Lists.newArrayList();
     for (AclEntry entry : entries) {
-      if (entry.getScope().equals(AclEntryScope.DEFAULT) &&
-          (entry.getName() == null || entry.getName().isEmpty())){
-        continue;
+      if (entry.getScope().equals(AclEntryScope.DEFAULT)){
+        if (!entry.getType().equals(AclEntryType.GROUP) &&
+            (entry.getName() == null || entry.getName().isEmpty())){
+          continue;
+        }
       }
-      
       unnamedRemoved.add(entry);
     }
     return unnamedRemoved;
@@ -153,11 +152,11 @@ public class INodeAclHelper {
         //We found aces to inherit, return them converted
         Collection<Ace> convertedToAccess = new ArrayList<>();
         for (Ace defaultAce : defaultAces) {
-          if (defaultAce.getSubject() != null && !defaultAce.getSubject().isEmpty()){
+          //if (defaultAce.getSubject() != null && !defaultAce.getSubject().isEmpty()){
             Ace access = defaultAce.copy();
             access.setIsDefault(false);
             convertedToAccess.add(access);
-          }
+          //}
         }
         return convertedToAccess;
       }
