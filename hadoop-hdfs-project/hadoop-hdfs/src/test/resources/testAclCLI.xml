@@ -975,7 +975,7 @@
         <command>-fs NAMENODE -mkdir /dir1</command>
         <command>-fs NAMENODE -setfacl -m user:charlie:rwx,group::-wx,group:sales:rwx,mask::r-x,default:user:charlie:rwx,default:group::r-x,default:group:sales:rwx /dir1</command>
         <command>-fs NAMENODE -touchz /dir1/file1</command>
-        <command>-fs NAMENODE -setfacl -m mask::r-- /dir1/file1</command>
+        <command>-fs NAMENODE -setfacl -m mask::rw- /dir1/file1</command>
         <command>-fs NAMENODE -getfacl /dir1/file1</command>
       </test-commands>
       <cleanup-commands>
@@ -996,27 +996,27 @@
         </comparator>
         <comparator>
           <type>SubstringComparator</type>
-          <expected-output>user::rwx</expected-output>
+          <expected-output>user::rw-</expected-output>
         </comparator>
         <comparator>
           <type>RegexpComparator</type>
-          <expected-output>^user:charlie:rwx\s+#effective:r--$</expected-output>
+          <expected-output>^user:charlie:rwx\s+#effective:rw-$</expected-output>
         </comparator>
         <comparator>
           <type>RegexpComparator</type>
-          <expected-output>^group::-wx\s+#effective:---$</expected-output>
+          <expected-output>^group::r-x\s+#effective:r--$</expected-output>
         </comparator>
         <comparator>
           <type>RegexpComparator</type>
-          <expected-output>^group:sales:rwx\s+#effective:r--$</expected-output>
+          <expected-output>^group:sales:rwx\s+#effective:rw-$</expected-output>
         </comparator>
         <comparator>
           <type>SubstringComparator</type>
-          <expected-output>mask::r--</expected-output>
+          <expected-output>mask::rw-</expected-output>
         </comparator>
         <comparator>
           <type>SubstringComparator</type>
-          <expected-output>other::r-x</expected-output>
+          <expected-output>other::r--</expected-output>
         </comparator>
         <comparator>
           <type>RegexpAcrossOutputComparator</type>

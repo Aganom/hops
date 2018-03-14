@@ -44,6 +44,7 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.permission.AclEntry;
+import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
@@ -2186,8 +2187,15 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
   private List<AclEntry> unprotectedModifyAclEntries(String src,
       List<AclEntry> aclSpec) throws IOException {
     AclStorage.validateAclSpec(aclSpec);
-  
     INode inode = getINode(src);
+    
+    if (aclSpec.size() == 1 && aclSpec.get(0).getType().equals(AclEntryType.MASK)){
+      //HOPS: We allow setting
+      FsPermission fsPermission = inode.getFsPermission();
+      inode.setPermission(new FsPermission(fsPermission.getUserAction(), aclSpec.get(0).getPermission(), fsPermission
+          .getOtherAction()));
+      return AclStorage.readINodeLogicalAcl(inode);
+    }
     List<AclEntry> existingAcl;
     if (AclStorage.hasOwnAcl(inode)){
       existingAcl = AclStorage.readINodeLogicalAcl(inode);
