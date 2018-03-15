@@ -898,7 +898,7 @@
       <description>ls: display extended acl marker</description>
       <test-commands>
         <command>-fs NAMENODE -mkdir -p /dir1/dir2</command>
-        <command>-fs NAMENODE -setfacl -m user:charlie:rwx,group::-wx,group:sales:rwx,mask::r-x,default:user:charlie:rwx,default:group::r-x,default:group:sales:rwx,default:mask::rw- /dir1/dir2</command>
+        <command>-fs NAMENODE -setfacl -m user:charlie:rwx,group::-wx,group:sales:rwx,mask::r-x,default:user:charlie:rwx,default:group::r-x,default:group:sales:rwx /dir1/dir2</command>
         <command>-fs NAMENODE -ls /dir1</command>
       </test-commands>
       <cleanup-commands>

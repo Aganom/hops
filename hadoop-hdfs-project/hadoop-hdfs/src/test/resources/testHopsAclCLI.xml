@@ -30,77 +30,24 @@
            TokenComparator
            -->
   <tests>
-    <!-- Tests for setfacl and getfacl-->
     <test>
-      <description>getfacl: basic permissions</description>
+      <description>ls : test extended acl marker</description>
       <test-commands>
-        <command>-fs NAMENODE -touchz /file1</command>
-        <command>-fs NAMENODE -getfacl /file1</command>
+        <command>-fs NAMENODE -mkdir -p /dir1/dir2</command>
+        <command>-fs NAMENODE -setfacl -m user:charlie:r-x /dir1/dir2</command>
+        <command>-fs NAMENODE -ls /dir1</command>
       </test-commands>
       <cleanup-commands>
-        <command>-fs NAMENODE -rm /file1</command>
+        <command>-fs NAMENODE -rm -R /dir1</command>
       </cleanup-commands>
       <comparators>
         <comparator>
           <type>SubstringComparator</type>
-          <expected-output># file: /file1</expected-output>
+          <expected-output>Found 1 items</expected-output>
         </comparator>
         <comparator>
-          <type>SubstringComparator</type>
-          <expected-output># owner: USERNAME</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output># group: supergroup</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
-        </comparator>
-      </comparators>
-    </test>
-    <test>
-      <description>setfacl: add an acl entry</description>
-      <test-commands>
-        <command>-fs NAMENODE -touchz /file1</command>
-        <command>-fs NAMENODE -setfacl -m user:charlie:r-x /file1</command>
-        <command>-fs NAMENODE -getfacl /file1</command>
-      </test-commands>
-      <cleanup-commands>
-        <command>-fs NAMENODE -rm /file1</command>
-      </cleanup-commands>
-      <comparators>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output># file: /file1</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output># owner: USERNAME</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output># group: supergroup</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>user::rw-</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>group::r--</expected-output>
-        </comparator>
-        <comparator>
-          <type>SubstringComparator</type>
-          <expected-output>other::r--</expected-output>
+          <type>RegexpComparator</type>
+          <expected-output>^drwxr-xr-x\+( )*-( )*[a-zA-z0-9]*( )*supergroup( )*0( )*[0-9]{4,}-[0-9]{2,}-[0-9]{2,} [0-9]{2,}:[0-9]{2,}( )*/dir1/dir2</expected-output>
         </comparator>
       </comparators>
     </test>

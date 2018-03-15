@@ -250,12 +250,12 @@ public class TestFSPermissionChecker {
         aclEntry(ACCESS, USER, ALL),
         aclEntry(ACCESS, GROUP, NONE),
         aclEntry(ACCESS, OTHER, READ_EXECUTE),
-        aclEntry(DEFAULT, USER, ALL),
+        //aclEntry(DEFAULT, USER, ALL),
         aclEntry(DEFAULT, GROUP, "sales", NONE),
-        aclEntry(DEFAULT, GROUP, NONE),
-        aclEntry(DEFAULT, OTHER, READ_EXECUTE));
+        aclEntry(DEFAULT, GROUP, NONE));
+        //aclEntry(DEFAULT, OTHER, READ_EXECUTE));
     assertPermissionGranted(BRUCE, "/dir1/file1", READ_WRITE);
-    assertPermissionGranted(DIANA, "/dir1/file1", READ);
+    assertPermissionDenied(DIANA, "/dir1/file1", READ);
     assertPermissionDenied(CLARK, "/dir1/file1", READ);
     assertPermissionDenied(CLARK, "/dir1/file1", WRITE);
     assertPermissionDenied(CLARK, "/dir1/file1", EXECUTE);

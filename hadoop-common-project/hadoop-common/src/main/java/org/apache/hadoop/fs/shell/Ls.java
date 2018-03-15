@@ -313,7 +313,8 @@ class Ls extends FsCommand {
       return false;
     }
     try {
-      return !fs.getAclStatus(item.path).getEntries().isEmpty();
+      boolean hasExtendedAcl = !fs.getAclStatus(item.path).getEntries().isEmpty();
+      return hasExtendedAcl;
     } catch (RemoteException e) {
       // If this is a RpcNoSuchMethodException, then the client is connected to
       // an older NameNode that doesn't support ACLs.  Keep going.
