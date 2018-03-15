@@ -88,7 +88,7 @@ class AclCommands extends FsCommand {
 
       AclStatus aclStatus = null;
       List<AclEntry> entries = null;
-      if (perm.getAclBit()) {
+      if (item.stat.hasAcl()) {
         aclStatus = item.fs.getAclStatus(item.path);
         entries = aclStatus.getEntries();
       } else {

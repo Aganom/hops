@@ -7641,7 +7641,7 @@ public class FSNamesystem
       @Override
       public void acquireLock(TransactionLocks locks) throws IOException {
         LockFactory lf = LockFactory.getInstance();
-        locks.add(lf.getINodeLock(true, nameNode, INodeLockType.WRITE,
+        locks.add(lf.getINodeLock(true, nameNode, INodeLockType.READ,
             INodeResolveType.PATH, src));
         locks.add(lf.getAcesLock());
       }
@@ -7650,7 +7650,7 @@ public class FSNamesystem
       public Object performTask() throws IOException {
         FSPermissionChecker pc = getPermissionChecker();
         if (isPermissionEnabled) {
-          checkPathAccess(pc, src, FsAction.WRITE);
+          checkPathAccess(pc, src, FsAction.READ);
         }
         return dir.getAclStatus(src);
       }
