@@ -2188,6 +2188,9 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
       List<AclEntry> aclSpec) throws IOException {
     AclStorage.validateAclSpec(aclSpec);
     INode inode = getINode(src);
+    if (inode == null){
+      throw new FileNotFoundException();
+    }
     
     if (aclSpec.size() == 1 && aclSpec.get(0).getType().equals(AclEntryType.MASK)){
       //HOPS: We allow setting
@@ -2218,6 +2221,9 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
     AclStorage.validateAclSpec(aclSpec);
   
     INode inode = getINode(src);
+    if (inode == null){
+      throw new FileNotFoundException();
+    }
     List<AclEntry> existingAcl;
     if (AclStorage.hasOwnAcl(inode)){
       existingAcl = AclStorage.readINodeLogicalAcl(inode);
@@ -2237,6 +2243,9 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
   private List<AclEntry> unprotectedRemoveDefaultAcl(String src)
       throws IOException {
     INode inode = getINode(src);
+    if (inode == null){
+      throw new FileNotFoundException();
+    }
     List<AclEntry> existingAcl;
     if (AclStorage.hasOwnAcl(inode)){
       existingAcl = AclStorage.readINodeLogicalAcl(inode);
@@ -2255,6 +2264,9 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
 
   private void unprotectedRemoveAcl(String src) throws IOException {
     INode inode = getINode(src);
+    if (inode == null){
+      throw new FileNotFoundException();
+    }
     AclStorage.removeINodeAcl(inode);
   }
 
@@ -2273,6 +2285,9 @@ boolean unprotectedRenameTo(String src, String dst, long timestamp,
     }
     
     INode inode = getINode(src);
+    if (inode == null){
+      throw new FileNotFoundException();
+    }
     List<AclEntry> existingAcl;
     if (AclStorage.hasOwnAcl(inode)){
       existingAcl = AclStorage.readINodeLogicalAcl(inode);

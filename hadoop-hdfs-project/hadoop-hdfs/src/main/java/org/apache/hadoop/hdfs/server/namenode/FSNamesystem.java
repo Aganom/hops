@@ -3149,6 +3149,7 @@ public class FSNamesystem
             LockFactory lf = getInstance();
             locks.add(lf.getINodeLock(true/*skip quota*/,nameNode, INodeLockType.READ,
                 INodeResolveType.PATH, resolveLink, src));
+            locks.add(lf.getAcesLock());
           }
 
           @Override
@@ -3190,6 +3191,7 @@ public class FSNamesystem
             locks.add(lf.getINodeLock(!dir.isQuotaEnabled(),nameNode,
                 INodeLockType.WRITE_ON_TARGET_AND_PARENT, INodeResolveType.PATH,
                 resolvedLink, src));
+            locks.add(lf.getAcesLock());
           }
 
           @Override
@@ -7519,7 +7521,9 @@ public class FSNamesystem
 
   void modifyAclEntries(final String src, final List<AclEntry> aclSpec) throws IOException {
     aclConfigFlag.checkForApiCall();
-    checkSafeMode();
+    if(isInSafeMode()){
+      throw new SafeModeException();
+    }
     new HopsTransactionalRequestHandler(HDFSOperationType.MODIFY_ACL_ENTRIES) {
       @Override
       public void acquireLock(TransactionLocks locks) throws IOException {
@@ -7543,6 +7547,9 @@ public class FSNamesystem
 
   void removeAclEntries(final String src, final List<AclEntry> aclSpec) throws IOException {
     aclConfigFlag.checkForApiCall();
+    if(isInSafeMode()){
+      throw new SafeModeException();
+    }
     new HopsTransactionalRequestHandler(HDFSOperationType.REMOVE_ACL_ENTRIES) {
     
       @Override
@@ -7566,6 +7573,9 @@ public class FSNamesystem
 
   void removeDefaultAcl(final String src) throws IOException {
     aclConfigFlag.checkForApiCall();
+    if(isInSafeMode()){
+      throw new SafeModeException();
+    }
     new HopsTransactionalRequestHandler(HDFSOperationType.REMOVE_DEFAULT_ACL) {
     
       @Override
@@ -7589,6 +7599,9 @@ public class FSNamesystem
 
   void removeAcl(final String src) throws IOException {
     aclConfigFlag.checkForApiCall();
+    if(isInSafeMode()){
+      throw new SafeModeException();
+    }
     new HopsTransactionalRequestHandler(HDFSOperationType.REMOVE_ACL) {
     
       @Override
@@ -7612,6 +7625,9 @@ public class FSNamesystem
 
   void setAcl(final String src, final List<AclEntry> aclSpec) throws IOException {
     aclConfigFlag.checkForApiCall();
+    if(isInSafeMode()){
+      throw new SafeModeException();
+    }
     new HopsTransactionalRequestHandler(HDFSOperationType.SET_ACL) {
       @Override
       public void acquireLock(TransactionLocks locks) throws IOException {
