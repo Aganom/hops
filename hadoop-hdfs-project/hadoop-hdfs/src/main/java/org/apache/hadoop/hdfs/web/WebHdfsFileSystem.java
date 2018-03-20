@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
+import org.apache.hadoop.hdfs.protocol.AclException;
 import org.apache.hadoop.hdfs.protocol.DSQuotaExceededException;
 import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
 import org.apache.hadoop.hdfs.protocol.NSQuotaExceededException;
@@ -357,7 +358,7 @@ public class WebHdfsFileSystem extends FileSystem
 
     final RemoteException re = (RemoteException) ioe;
     return re
-        .unwrapRemoteException(AccessControlException.class, InvalidToken.class,
+        .unwrapRemoteException(AccessControlException.class, AclException.class, InvalidToken.class,
             AuthenticationException.class, AuthorizationException.class,
             FileAlreadyExistsException.class, FileNotFoundException.class,
             ParentNotDirectoryException.class, UnresolvedPathException.class,

@@ -277,8 +277,7 @@ public class TestStickyBit {
   public void testAclMovingFiles() throws Exception {
     testMovingFiles(true);
   }
-
-  @Test
+  
   private void testMovingFiles(boolean useAcl) throws IOException, InterruptedException {
     MiniDFSCluster cluster = null;
 
