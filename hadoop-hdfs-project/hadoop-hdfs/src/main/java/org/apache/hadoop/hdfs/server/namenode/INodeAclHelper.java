@@ -208,7 +208,7 @@ public class INodeAclHelper {
     }
   }
   
-  private static List<AclEntry> convert(List<Ace> aces) throws AclException {
+  public static List<AclEntry> convert(List<Ace> aces) throws AclException {
     List<AclEntry> result = new ArrayList<>();
     for (Ace ace : aces) {
       result.add(new AclEntry.Builder()

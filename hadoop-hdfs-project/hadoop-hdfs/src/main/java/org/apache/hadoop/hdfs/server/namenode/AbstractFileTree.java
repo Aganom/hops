@@ -24,8 +24,10 @@ import io.hops.exception.StorageException;
 import io.hops.exception.TransactionContextException;
 import io.hops.leader_election.node.ActiveNode;
 import io.hops.metadata.HdfsStorageFactory;
+import io.hops.metadata.hdfs.dal.AceDataAccess;
 import io.hops.metadata.hdfs.dal.INodeAttributesDataAccess;
 import io.hops.metadata.hdfs.dal.INodeDataAccess;
+import io.hops.metadata.hdfs.entity.Ace;
 import io.hops.metadata.hdfs.entity.INodeIdentifier;
 import io.hops.metadata.hdfs.entity.MetadataLogEntry;
 import io.hops.metadata.hdfs.entity.ProjectedINode;
@@ -36,6 +38,7 @@ import io.hops.transaction.lock.SubtreeLockHelper;
 import io.hops.transaction.lock.SubtreeLockedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.permission.AclEntry;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hdfs.protocol.UnresolvedPathException;
 import org.apache.hadoop.security.AccessControlException;
@@ -157,10 +160,11 @@ abstract class AbstractFileTree {
     this.subAccess = subAccess;
   }
 
-  private void checkAccess(INode node, FsAction action)
+  private void checkAccess(INode node, FsAction action,
+      List<AclEntry> aclEntries)
       throws IOException {
     if (!fsPermissionChecker.isSuperUser() && node.isDirectory()) {
-      fsPermissionChecker.check(node, action);
+      fsPermissionChecker.check(node, action, aclEntries);
     }
   }
 
@@ -238,7 +242,15 @@ abstract class AbstractFileTree {
         }
 
         if (namesystem.isPermissionEnabled() && subAccess != null) {
-          checkAccess(subtreeRoot, subAccess);
+          AceDataAccess<Ace> aceDataAccess = (AceDataAccess) HdfsStorageFactory.getDataAccess(AceDataAccess.class);
+          int numAces = subtreeRoot.getNumAces();
+          int[] aceIndices = new int[numAces];
+          for (int i = 0 ; i < aceIndices.length ; i++){
+            aceIndices[i] = i;
+          }
+          List<Ace> acesByPKBatched = aceDataAccess.getAcesByPKBatched(subtreeRoot.getId(), aceIndices);
+          List<AclEntry> aclEntries = INodeAclHelper.convert(acesByPKBatched);
+          checkAccess(subtreeRoot, subAccess, aclEntries);
         }
 
         long size = 0;

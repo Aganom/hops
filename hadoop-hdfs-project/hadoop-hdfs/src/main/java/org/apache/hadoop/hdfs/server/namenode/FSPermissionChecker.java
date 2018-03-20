@@ -266,7 +266,7 @@ class FSPermissionChecker {
       throws IOException {
     check(i >= 0 ? inodes[i] : null, access);
   }
-
+  
   /**
    * Guarded by {@link FSNamesystem#readLock()}
    */
@@ -291,6 +291,22 @@ class FSPermissionChecker {
     check(inode.getId(), access, mode, inode.getUserName(),
         inode.getGroupName());
     
+  }
+  
+  void check(INode inode, FsAction access, List<AclEntry> aclEntries) throws IOException {
+    if (inode == null){
+      return;
+    }
+    
+    FsPermission mode = inode.getFsPermission();
+    if (aclEntries != null && !aclEntries.isEmpty()){
+      if (aclEntries.get(0).getScope() == AclEntryScope.ACCESS) {
+        checkAccessAcl(inode, access, mode, aclEntries);
+        return;
+      }
+    }
+    check(inode.getId(), access, mode, inode.getUserName(),
+        inode.getGroupName());
   }
 
   private void checkFsPermission(INode inode, FsAction access,
