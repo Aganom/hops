@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hdfs.server.protocol;
 
+import com.jcraft.jsch.IO;
 import io.hops.leader_election.node.ActiveNode;
 import io.hops.leader_election.node.SortedActiveNodeList;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -210,5 +211,10 @@ public interface DatanodeProtocol {
    */
   @Idempotent
   public byte[] getSmallFileData(int id) throws IOException;
+
+  /**
+   * After a complete block report, the DN notifies all name nodes that it has reported.
+   */
+  public void notifyBlockReportComplete(DatanodeRegistration registration, String poolId, DatanodeStorage[] storages) throws IOException;
 
 }

@@ -2093,6 +2093,23 @@ public class BlockManager {
     return !node.hasStaleStorages();
   }
 
+  public void processReportCompletedNotification(final DatanodeID nodeID, String poolId, DatanodeStorage[] storages) throws IOException {
+    DatanodeDescriptor node = datanodeManager.getDatanode(nodeID);
+    if (node == null || !node.isAlive) {
+      throw new IOException(
+          "reportCompletedNotification from dead or unregistered node: " + nodeID);
+    }
+
+    for (DatanodeStorage storage : storages){
+      DatanodeStorageInfo storageInfo = node.getStorageInfo(storage.getStorageID());
+      if (storageInfo == null) {
+        // We handle this for backwards compatibility.
+        storageInfo = node.updateStorage(storage);
+      }
+      storageInfo.receivedBlockReport();
+    }
+  }
+
   /**
    * Rescan the list of blocks which were previously postponed.
    */

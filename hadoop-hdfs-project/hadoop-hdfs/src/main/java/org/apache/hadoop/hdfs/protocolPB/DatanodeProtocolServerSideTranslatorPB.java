@@ -47,15 +47,7 @@ import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.ReportBadBlo
 import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.StorageBlockReportProto;
 import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.StorageReceivedDeletedBlocksProto;
 import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.*;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
-import org.apache.hadoop.hdfs.server.protocol.HeartbeatResponse;
-import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
-import org.apache.hadoop.hdfs.server.protocol.ReceivedDeletedBlockInfo;
-import org.apache.hadoop.hdfs.server.protocol.StorageBlockReport;
-import org.apache.hadoop.hdfs.server.protocol.StorageReceivedDeletedBlocks;
-import org.apache.hadoop.hdfs.server.protocol.StorageReport;
+import org.apache.hadoop.hdfs.server.protocol.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -291,6 +283,22 @@ public class DatanodeProtocolServerSideTranslatorPB
     } catch (IOException e){
       throw new ServiceException(e);
     }
+  }
+
+  @Override
+  public DatanodeProtocolProtos.NotifyBlockReportCompleteResponseProto notifyBlockReportComplete(RpcController controller, DatanodeProtocolProtos.NotifyBlockReportCompleteProto request) throws ServiceException {
+      try {
+        DatanodeRegistration registration = PBHelper.convert(request.getRegistration());
+        String poolId = request.getPoolId();
+        DatanodeStorage[] storages = new DatanodeStorage[request.getStoragesCount()];
+        for (int i = 0 ; i < storages.length ; i++){
+          storages[i] = PBHelper.convert(request.getStorages(i));
+        }
+        impl.notifyBlockReportComplete(registration, poolId, storages);
+      } catch (IOException e) {
+        throw new ServiceException(e);
+      }
+      return null;
   }
 
 }

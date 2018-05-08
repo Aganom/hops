@@ -49,17 +49,7 @@ import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.StorageBlock
 import org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos.StorageReceivedDeletedBlocksProto;
 import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.VersionRequestProto;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
-import org.apache.hadoop.hdfs.server.protocol.BlockReport;
-import org.apache.hadoop.hdfs.server.protocol.BlockReportBucket;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
-import org.apache.hadoop.hdfs.server.protocol.HeartbeatResponse;
-import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
-import org.apache.hadoop.hdfs.server.protocol.ReceivedDeletedBlockInfo;
-import org.apache.hadoop.hdfs.server.protocol.StorageBlockReport;
-import org.apache.hadoop.hdfs.server.protocol.StorageReceivedDeletedBlocks;
-import org.apache.hadoop.hdfs.server.protocol.StorageReport;
+import org.apache.hadoop.hdfs.server.protocol.*;
 import org.apache.hadoop.io.retry.RetryPolicies;
 import org.apache.hadoop.io.retry.RetryPolicy;
 import org.apache.hadoop.io.retry.RetryProxy;
@@ -357,6 +347,23 @@ public class DatanodeProtocolClientSideTranslatorPB
 
     } catch (ServiceException e) {
     throw ProtobufHelper.getRemoteException(e);
+    }
+  }
+
+  @Override
+  public void notifyBlockReportComplete(DatanodeRegistration registration, String poolId, DatanodeStorage[] storages) throws IOException {
+    DatanodeProtocolProtos.NotifyBlockReportCompleteProto.Builder request =
+            DatanodeProtocolProtos.NotifyBlockReportCompleteProto.newBuilder();
+    request.setRegistration(PBHelper.convert(registration));
+    request.setPoolId(poolId);
+    for (DatanodeStorage storage : storages) {
+      request.addStorages(PBHelper.convert(storage));
+    }
+
+    try {
+      rpcProxy.notifyBlockReportComplete(NULL_CONTROLLER, request.build());
+    } catch (ServiceException e) {
+      throw ProtobufHelper.getRemoteException(e);
     }
   }
 

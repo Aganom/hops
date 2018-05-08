@@ -326,7 +326,7 @@ public class FsVolumeImpl implements FsVolumeSpi {
     return storageType;
   }
 
-  DatanodeStorage toDatanodeStorage() {
+  public DatanodeStorage toDatanodeStorage() {
     return new DatanodeStorage(storageID, DatanodeStorage.State.NORMAL, storageType);
   }
 }

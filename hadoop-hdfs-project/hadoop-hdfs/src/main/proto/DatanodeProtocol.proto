@@ -345,12 +345,20 @@ message NameNodeAddressRequestForBlockReportingProto {
 required uint64 noOfBlks = 1;
 }
 
+message NotifyBlockReportCompleteProto {
+  required DatanodeRegistrationProto registration = 1;
+  required string poolId = 2;
+  repeated DatanodeStorageProto storages = 3;
+}
+
+message NotifyBlockReportCompleteResponseProto {}
+
 
 message GetSmallFileDataProto {
     required uint32 id = 1;
 }
 
-message SmallFileDataResponseProto{
+message SmallFileDataResponseProto {
     required bytes data = 1;
 }
 
@@ -418,4 +426,6 @@ service DatanodeProtocolService {
   * Ask a namenode to read the small file data
   */
   rpc getSmallFileData (GetSmallFileDataProto) returns (SmallFileDataResponseProto);
+
+  rpc notifyBlockReportComplete (NotifyBlockReportCompleteProto) returns (NotifyBlockReportCompleteResponseProto);
 }

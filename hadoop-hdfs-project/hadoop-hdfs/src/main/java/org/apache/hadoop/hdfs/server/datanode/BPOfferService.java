@@ -34,6 +34,7 @@ import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.ExtendedBlock;
 import org.apache.hadoop.hdfs.protocolPB.DatanodeProtocolClientSideTranslatorPB;
+import org.apache.hadoop.hdfs.server.datanode.fsdataset.impl.FsVolumeImpl;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.protocol.BalancerBandwidthCommand;
 import org.apache.hadoop.hdfs.server.protocol.BlockCommand;
@@ -56,16 +57,12 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.hadoop.hdfs.server.protocol.BlockReport;
-
-import static org.apache.hadoop.util.Time.now;
 
 import static org.apache.hadoop.util.Time.now;
 
@@ -611,6 +608,14 @@ class BPOfferService implements Runnable {
                 "for other block pool " + bp;
 
         dn.finalizeUpgradeForPool(bp);
+        for (BPServiceActor bpServiceActor : getBPServiceActors()) {
+          List<FsVolumeImpl> volumes = (List<FsVolumeImpl>) dn.getFSDataset().getVolumes();
+          List<DatanodeStorage> storages = new ArrayList<>();
+          for (FsVolumeImpl volume : volumes) {
+            storages.add(volume.toDatanodeStorage());
+          }
+          bpServiceActor.notifyBlockReportComplete(bpRegistration, getBlockPoolId(), storages.toArray(new DatanodeStorage[0]));
+        }
         break;
       case DatanodeProtocol.DNA_RECOVERBLOCK:
         String who = "NameNode at " + actor.getNNSocketAddress();
