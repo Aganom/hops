@@ -293,7 +293,6 @@ public class TestBlockReport2 {
    *
    * @throws IOException
    */
-  @Ignore // Deleting a file does not trigger delete reports
   @Test
   public void blockReport_01() throws IOException, InterruptedException {
     DistributedFileSystem fs = null;
@@ -431,7 +430,6 @@ public class TestBlockReport2 {
    * @throws IOException
    * @throws InterruptedException
    */
-  @Ignore //Don't know what's going wrong yet
   @Test
   public void blockReport_03() throws IOException, InterruptedException {
     DistributedFileSystem fs = null;
@@ -514,13 +512,11 @@ public class TestBlockReport2 {
   /**
    * Test hard lease recovery
    */
-  @Ignore // Think this case can't be handled by bucket report
   @Test
   public void blockReport_04() throws Exception {
     blockReprot_hardlease(true);
   }
 
-  @Ignore // Think this case can't be handled by bucket report
   @Test
   public void blockReport_05() throws Exception {
     blockReprot_hardlease(false);
@@ -691,7 +687,6 @@ public class TestBlockReport2 {
     blockReportReplication((short) 3, (short) 6);
   }
 
-  @Ignore  //Don't know why this doesn't work
   @Test
   public void blockReport_08() throws IOException, InterruptedException {
     //for some reason reducing the replicaton doe snot work well
@@ -771,7 +766,6 @@ public class TestBlockReport2 {
   }
 
 
-  @Ignore // Don't know why this doesn't work
   @Test
   public void blockReport_09() throws IOException, InterruptedException {
     concurrentWrites(1 /*threads*/,
@@ -780,7 +774,6 @@ public class TestBlockReport2 {
             0 /*threshold*/);
   }
 
-  @Ignore // Don't know why this doesn't work
   @Test
   public void blockReport_10() throws IOException, InterruptedException {
     concurrentWrites(5 /*threads*/,
@@ -911,7 +904,6 @@ public class TestBlockReport2 {
    * @throws IOException
    * @throws InterruptedException
    */
-   @Ignore //This test doesn't make sense
    @Test
   public void blockReport_12() throws IOException, InterruptedException {
     DistributedFileSystem fs = null;
@@ -973,8 +965,6 @@ public class TestBlockReport2 {
    * @throws IOException
    * @throws InterruptedException
    */
-  @Ignore // Hash buckets do not match report after sending. Either they contain non-finalized blocks
-          // or there is some logical problem with letting the full block report "reset" hashes.
   @Test
   public void blockReport_13() throws IOException, InterruptedException {
     DistributedFileSystem fs = null;

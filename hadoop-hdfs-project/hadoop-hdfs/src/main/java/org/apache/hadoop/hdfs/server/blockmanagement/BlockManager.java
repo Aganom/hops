@@ -2462,14 +2462,6 @@ public class BlockManager {
                           invalidatedReplicas);
           if (storedBlock != null) {
             mismatchedBlocksAndInodes.remove(storedBlock.getBlockId());
-            switch (brb.getState()){
-              case RBW:
-                hash += BlockReport.hash(storedBlock, ReplicaState.RBW);
-                break;
-              case FINALIZED:
-                hash += BlockReport.hash(storedBlock, ReplicaState.FINALIZED);
-                break;
-            }
             if (brb.getState() == BlockReportBlockState.FINALIZED){
               // Only update hash with blocks that should not
               // be removed and are finalized. This helps catch excess
@@ -3625,7 +3617,7 @@ public class BlockManager {
    * The given node is reporting that it received a certain block.
    */
   @VisibleForTesting
-  boolean addBlock(DatanodeStorageInfo storage, Block block, String delHint)
+  void addBlock(DatanodeStorageInfo storage, Block block, String delHint)
       throws IOException {
     DatanodeDescriptor node = storage.getDatanodeDescriptor();
     // Decrement number of blocks scheduled to this datanode.
@@ -3647,20 +3639,10 @@ public class BlockManager {
     // Modify the blocks->datanode map and node's map.
     //
     pendingReplications.decrement(getBlockInfo(block), node);
-    return processAndHandleReportedBlock(storage, block, ReplicaState.FINALIZED,
-        delHintNode);
+    processAndHandleReportedBlock(storage, block, ReplicaState.FINALIZED, delHintNode);
   }
 
-  /**
-   *
-   * @param storage
-   * @param block
-   * @param reportedState
-   * @param delHintNode
-   * @return true if the block was new, false otherwise
-   * @throws IOException
-   */
-  private boolean processAndHandleReportedBlock(
+  private void processAndHandleReportedBlock(
       DatanodeStorageInfo storage, Block block,
       ReplicaState reportedState, DatanodeDescriptor delHintNode)
       throws IOException {
@@ -3670,8 +3652,7 @@ public class BlockManager {
     Collection<BlockToMarkCorrupt> toCorrupt =
         new LinkedList<>();
     Collection<StatefulBlockInfo> toUC = new LinkedList<>();
-    final DatanodeDescriptor node = storage.getDatanodeDescriptor();
-    
+
     processIncrementallyReportedBlock(storage, block, reportedState, toAdd, toInvalidate,
         toCorrupt, toUC);
     // the block is only in one of the to-do lists
@@ -3680,16 +3661,13 @@ public class BlockManager {
         toUC.size() + toAdd.size() + toInvalidate.size() + toCorrupt.size() <=
             1 : "The block should be only in one of the lists.";
 
-    boolean wasnew = false;
     for (StatefulBlockInfo b : toUC) {
       addStoredBlockUnderConstruction(b, storage);
-      wasnew = true;
     }
     long numBlocksLogged = 0;
     for (BlockInfo b : toAdd) {
       addStoredBlock(b, storage, delHintNode, numBlocksLogged < maxNumBlocksToLog);
       numBlocksLogged++;
-      wasnew = true;
     }
     if (numBlocksLogged > maxNumBlocksToLog) {
       blockLog.info("BLOCK* addBlock: logged info for " + maxNumBlocksToLog
@@ -3704,7 +3682,6 @@ public class BlockManager {
     for (BlockToMarkCorrupt b : toCorrupt) {
       markBlockAsCorrupt(b, storage, storage.getDatanodeDescriptor());
     }
-    return wasnew;
   }
 
   /**
@@ -3792,55 +3769,35 @@ public class BlockManager {
                 " dataNode=" + node.getXferAddr() + " storage=" + storage.getStorageID() +
                     " sid: " + storage.getSid() + " status=" + rdbi.getStatus());
             HashBuckets hashBuckets = HashBuckets.getInstance();
-            boolean isNew;
+
             switch (rdbi.getStatus()) {
               case CREATING:
-                isNew = processAndHandleReportedBlock(storage, rdbi.getBlock(),
+                processAndHandleReportedBlock(storage, rdbi.getBlock(),
                         ReplicaState.RBW, null);
-                if (isNew){
-                  hashBuckets.applyHash(storage.getSid(), ReplicaState.RBW, rdbi.getBlock());
-                }
                 received[0]++;
                 break;
               case APPENDING:
-                isNew = processAndHandleReportedBlock(storage, rdbi.getBlock(),
+                processAndHandleReportedBlock(storage, rdbi.getBlock(),
                     ReplicaState.RBW, null);
-                if (isNew) {
-                  hashBuckets.applyHash(storage.getSid(), ReplicaState.RBW, rdbi.getBlock());
-                }
                 received[0]++;
                 break;
               case RECOVERING_APPEND:
-                isNew = processAndHandleReportedBlock(storage, rdbi.getBlock(),
+                processAndHandleReportedBlock(storage, rdbi.getBlock(),
                     ReplicaState.RBW, null);
-                if (isNew) {
-                  //To be able to undo previous hash correctly we need to know the previous
-                  //generation stamp. For now, will generally cause mismatch.
-                  hashBuckets.applyHash(storage.getSid(), ReplicaState.RBW, rdbi.getBlock());
-                }
                 received[0]++;
                 break;
               case RECEIVED:
-                isNew = addBlock(storage, rdbi.getBlock(), rdbi.getDelHints());
-                if (!isNew){
-                  hashBuckets.undoHash(storage.getSid(), ReplicaState.RBW, rdbi.getBlock());
-                }
-                hashBuckets.applyHash(storage.getSid(), ReplicaState.FINALIZED,
-                        rdbi.getBlock());
+                addBlock(storage, rdbi.getBlock(), rdbi.getDelHints());
+                hashBuckets.applyHash(storage.getSid(), ReplicaState.FINALIZED, rdbi.getBlock());
                 received[0]++;
                 break;
               case UPDATE_RECOVERED:
                 addBlock(storage, rdbi.getBlock(), rdbi.getDelHints());
-                //To be able to undo previous hash correctly, we need to know what state
-                //was previously known on the nn. For now, will generally cause mismatch, which
-                //is not optimal but acceptable.
-                hashBuckets.applyHash(storage.getSid(), ReplicaState.FINALIZED, rdbi.getBlock());
                 received[0]++;
                 break;
               case DELETED:
                 removeStoredBlock(rdbi.getBlock(), storage.getDatanodeDescriptor());
-                hashBuckets.undoHash(storage.getSid(), ReplicaState.FINALIZED,
-                    rdbi.getBlock());
+                hashBuckets.undoHash(storage.getSid(), ReplicaState.FINALIZED, rdbi.getBlock());
                 deleted[0]++;
                 break;
               default:
@@ -3877,7 +3834,6 @@ public class BlockManager {
               nodeID + " receiving: " + receiving[0] + ", " + " received: " +
               received[0] + ", " + " deleted: " + deleted[0]);
     }
-
   }
 
   /**
