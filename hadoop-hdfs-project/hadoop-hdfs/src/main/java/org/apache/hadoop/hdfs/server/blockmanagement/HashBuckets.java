@@ -65,6 +65,11 @@ public class HashBuckets {
   public int getBucketForBlock(Block block){
     return (int) (block.getBlockId() % numBuckets);
   }
+
+  public int getBucketForBlockId(long blockId){
+    assert (blockId >= 0);
+    return (int) (blockId % numBuckets);
+  }
   
   public List<HashBucket> getBucketsForStorage(final DatanodeStorageInfo storage)
       throws IOException {

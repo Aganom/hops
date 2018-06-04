@@ -2284,18 +2284,8 @@ public class BlockManager {
     if (newReport == null) {
       return null;
     }
-    // Get all replica's stored on this storage
-    final Map<Long,Integer> blkAndInodeIdMap = storage.getAllStorageReplicas();
-    // Get the id's of all blocks stored on this storage
-    final Set<Long> allMachineBlocks = new HashSet<Long>(blkAndInodeIdMap.keySet());
-    // Get all invalidated replica's
-    final Map<Long,Long> invalidatedReplicas = storage
-        .getAllStorageInvalidatedReplicasWithGenStamp();
-    
-    ReportStatistics stats = new ReportStatistics();
-    stats.numBuckets = newReport.getBuckets().length;
-    stats.numBlocks = newReport.getNumBlocks();
-  
+
+    // Check which buckets need to be checked
     HashMatchingResult matchingResult;
     if (firstBlockReport){
         //First block report, or report in safe mode, should always process complete report.
@@ -2308,9 +2298,7 @@ public class BlockManager {
     } else {
       matchingResult = calculateMismatchedHashes(storage, newReport);
     }
-    stats.numBucketsMatching = matchingResult.matchingBuckets.size();
-    
-    
+
     if(LOG.isDebugEnabled()){
       LOG.debug(String.format("%d/%d reported hashes matched",
           newReport.getHashes().length-matchingResult.mismatchedBuckets.size(),
@@ -2318,13 +2306,17 @@ public class BlockManager {
     }
     
     final Set<Long> aggregatedSafeBlocks = new HashSet<>();
-    
-    final Map<Long, Integer> mismatchedBlocksAndInodes = storage
-            .getAllStorageReplicasInBuckets(matchingResult.mismatchedBuckets);
+
+    final Map<Long, Integer> allBlockIdsAndInodeIdsOnStorage = storage.getAllStorageReplicas();
+    final Map<Long, Integer> mismatchedBlocksAndInodes = filterMismatched(matchingResult.mismatchedBuckets, allBlockIdsAndInodeIdsOnStorage);
 
     final Set<Long> allMismatchedBlocksOnServer = mismatchedBlocksAndInodes.keySet();
     //Safe mode report and first report for storage will have all buckets mismatched.
     aggregatedSafeBlocks.addAll(allMismatchedBlocksOnServer);
+
+    // Get all invalidated replica's
+    final Map<Long,Long> invalidatedReplicas = storage
+            .getAllStorageInvalidatedReplicasWithGenStamp();
 
     processMisMatchingBuckets(storage, newReport, matchingResult, toAdd,
             toInvalidate,
@@ -2333,12 +2325,9 @@ public class BlockManager {
             aggregatedSafeBlocks, allMismatchedBlocksOnServer,
             invalidatedReplicas);
 
-    stats.numToAdd = toAdd.size();
-    stats.numToInvalidate = toInvalidate.size();
-    stats.numToCorrupt = toCorrupt.size();
-    stats.numToUC = toUC.size();
     toRemove.addAll(allMismatchedBlocksOnServer);
-    stats.numToRemove = toRemove.size();
+
+    ReportStatistics stats = blockReportStatisticsHelper(newReport, matchingResult, toAdd, toInvalidate, toCorrupt, toUC, toRemove);
     if (namesystem.isInStartupSafeMode()) {
       aggregatedSafeBlocks.removeAll(toRemove);
       LOG.debug("AGGREGATED SAFE BLOCK #: " + aggregatedSafeBlocks.size() +
@@ -2347,6 +2336,33 @@ public class BlockManager {
       stats.numConsideredSafeIfInSafemode = aggregatedSafeBlocks.size();
     }
     return stats;
+  }
+
+  private Map<Long,Integer> filterMismatched(List<Integer> mismatchedBuckets, Map<Long,Integer> allReplicasOnStorage) {
+    Set<Integer> mismatchedBucketsSet = new HashSet<>(mismatchedBuckets);
+    Map<Long, Integer> filtered = new HashMap<>();
+    HashBuckets hashBuckets = HashBuckets.getInstance();
+    for (Map.Entry<Long, Integer> blockIdInodeIdEntry : allReplicasOnStorage.entrySet()) {
+      long blockId = blockIdInodeIdEntry.getKey();
+      int inodeId = blockIdInodeIdEntry.getValue();
+      int bucketId = hashBuckets.getBucketForBlockId(blockId);
+      if (mismatchedBucketsSet.contains(bucketId)){
+        filtered.put(blockId, inodeId);
+      }
+    }
+    return filtered;
+  }
+
+  private ReportStatistics blockReportStatisticsHelper(BlockReport newReport, HashMatchingResult matchingResult, Collection<BlockInfo> toAdd, Collection<Block> toInvalidate, Collection<BlockToMarkCorrupt> toCorrupt, Collection<StatefulBlockInfo> toUC, Collection<Long> toRemove) {
+      ReportStatistics stats = new ReportStatistics();
+      stats.numBuckets = newReport.getBuckets().length;
+      stats.numBucketsMatching = matchingResult.matchingBuckets.size();
+      stats.numToAdd = toAdd.size();
+      stats.numToInvalidate = toInvalidate.size();
+      stats.numToCorrupt = toCorrupt.size();
+      stats.numToUC = toUC.size();
+      stats.numToRemove = toRemove.size();
+      return stats;
   }
 
   private void processMisMatchingBuckets(final DatanodeStorageInfo storage,
@@ -2365,7 +2381,6 @@ public class BlockManager {
     for (final int bucketId : matchingResult.mismatchedBuckets) {
       final Bucket bucket = newReport.getBuckets()[bucketId];
       final List<ReportedBlock> bucketBlocks = Arrays.asList(bucket.getBlocks());
-      if(bucket.getBlocks().length>0){
         final Callable<Void> subTask = new Callable<Void>() {
           @Override
           public Void call() throws Exception {
@@ -2381,7 +2396,6 @@ public class BlockManager {
         };
         subTasks.add(subTask); // collect subtasks
       }
-    }
 
     try {
       ((FSNamesystem) namesystem).getExecutorService().invokeAll(subTasks);
@@ -2448,6 +2462,14 @@ public class BlockManager {
                           invalidatedReplicas);
           if (storedBlock != null) {
             mismatchedBlocksAndInodes.remove(storedBlock.getBlockId());
+            switch (brb.getState()){
+              case RBW:
+                hash += BlockReport.hash(storedBlock, ReplicaState.RBW);
+                break;
+              case FINALIZED:
+                hash += BlockReport.hash(storedBlock, ReplicaState.FINALIZED);
+                break;
+            }
             if (brb.getState() == BlockReportBlockState.FINALIZED){
               // Only update hash with blocks that should not
               // be removed and are finalized. This helps catch excess

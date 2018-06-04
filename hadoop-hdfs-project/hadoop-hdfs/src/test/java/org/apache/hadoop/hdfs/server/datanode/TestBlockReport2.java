@@ -890,6 +890,7 @@ public class TestBlockReport2 {
       fs = (DistributedFileSystem) cluster.getFileSystem();
 
       Thread.sleep(5000);
+
       //after initial BR
       matchDNandNNState(0, NUM_DATANODES, cluster, 0, numBuckets);
       sendAndCheckBR(0, NUM_DATANODES, cluster, poolId, 0, numBuckets);
@@ -1072,39 +1073,31 @@ public class TestBlockReport2 {
       Map<DatanodeStorage, BlockReport> storageReports = getDNBR(cluster, dn, numBuckets);
 
       for (Map.Entry<DatanodeStorage, BlockReport> entry : storageReports.entrySet()) {
-        BlockReport value = entry.getValue();
-        List<Long> dnHashes = new ArrayList<>();
-        for (long hash : value.getHashes()) {
-          dnHashes.add(hash);
-        }
+        BlockReport report = entry.getValue();
 
         DatanodeStorageInfo storage = cluster.getNamesystem().getBlockManager().getDatanodeManager().getDatanode(dn.getDatanodeId()).getStorageInfo(entry.getKey().getStorageID());
         List<HashBucket> storageHashes = getStorageHashes(storage);
+        if (storageHashes.size() > report.getHashes().length){
+          LOG.warn("More hashes on namenode than on datanode. After reconfiguration, remaining buckets should be cleaned");
+        }
 
-        assertFalse("More buckets on NN than on DN. might indicate configuration issue.", storageHashes.size() > dnHashes.size());
+        Collections.sort(storageHashes, new Comparator<HashBucket>() {
+          @Override
+          public int compare(HashBucket o1, HashBucket o2) {
+            return o1.getBucketId() - o2.getBucketId();
+          }
+        });
 
-        if (storageHashes.size() != dnHashes.size()){
+
+        if (storageHashes.size() != report.getHashes().length){
           LOG.debug("Number of hashes on NN doesn't match DN. This should only be the case before first report.");
         }
 
-        List<Long> nnHashes = new ArrayList<>();
-        for (HashBucket storageHash : storageHashes) {
-          nnHashes.add(storageHash.getHash());
-        }
-        for (int j = 0; j < dnHashes.size() - storageHashes.size() ; j++){
-          nnHashes.add(0L); //fill with zeros unordered
-        }
+        LOG.debug("DN Hash: " + Arrays.toString(report.getHashes()));
+        LOG.debug("NN Hash: " + Arrays.toString(storageHashes.toArray()));
 
-        Collections.sort(nnHashes);
-        Collections.sort(dnHashes);
-
-        LOG.debug("DN Hash: " + Arrays.toString(dnHashes.toArray()));
-        LOG.debug("NN Hash: " + Arrays.toString(nnHashes.toArray()));
-
-        for (int j = 0; j < numBuckets; j++) {
-          Long dnHash = dnHashes.get(j);
-          Long nnHash = nnHashes.get(j);
-          if (!dnHash.equals(nnHash)) {
+        for (int hashIndex = 0 ; hashIndex < report.getHashes().length ; hashIndex++) {
+          if (report.getHashes()[hashIndex] != storageHashes.get(hashIndex).getHash()) {
             mismatchCount++;
           }
         }
@@ -1205,14 +1198,11 @@ public class TestBlockReport2 {
   private List<HashBucket> getStorageHashes(DatanodeStorageInfo storage) throws IOException {
     List<HashBucket> namenodeHashes = HashBuckets.getInstance().getBucketsForStorage(storage);
 
-    boolean hasIncorrectStorageBucket = false;
     for (HashBucket namenodeHash : namenodeHashes) {
       if (namenodeHash.getStorageId() != storage.getSid()){
-        hasIncorrectStorageBucket = true;
-        break;
+        fail("HashBuckets.getBucketForStorage() returned incorrect storage hash");
       }
     }
-    assertFalse("HashBuckets.getBucketForStorage() returned incorrect storage hash", hasIncorrectStorageBucket);
 
     return namenodeHashes;
   }
