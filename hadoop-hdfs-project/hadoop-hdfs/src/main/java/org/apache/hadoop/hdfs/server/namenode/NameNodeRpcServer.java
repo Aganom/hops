@@ -83,6 +83,7 @@ import org.apache.hadoop.hdfs.server.protocol.BlocksWithLocations;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeStorageReport;
 import org.apache.hadoop.hdfs.server.protocol.FinalizeCommand;
 import org.apache.hadoop.hdfs.server.protocol.HeartbeatResponse;
@@ -986,6 +987,19 @@ class NameNodeRpcServer implements NamenodeProtocols {
   @Override
   public byte[] getSmallFileData(int id) throws IOException {
     return namesystem.getSmallFileData(id);
+  }
+
+  @Override
+  public void notifyNamenodeBlockReportCompleted(DatanodeRegistration nodeReg, String blockPoolId, List<DatanodeStorage> storages) throws IOException {
+    verifyRequest(nodeReg);
+    if (blockStateChangeLog.isDebugEnabled()) {
+      blockStateChangeLog.debug(
+          "*BLOCK* NameNode.notifyNamenodeBlockReportCompleted: from " + nodeReg +
+              ", storages.length=" + storages.size());
+    }
+    final BlockManager bm = namesystem.getBlockManager();
+    bm.notifyNamenodeBlockReportCompleted(nodeReg, blockPoolId, storages);
+
   }
 
   /**

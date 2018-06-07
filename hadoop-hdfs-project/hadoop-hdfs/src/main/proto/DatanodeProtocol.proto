@@ -354,6 +354,17 @@ message SmallFileDataResponseProto{
     required bytes data = 1;
 }
 
+/*
+ * Notify other namenodes of reported storage
+ */
+message BlockReportCompletedRequestProto {
+  required DatanodeRegistrationProto registration = 1;
+  required string blockPoolId = 2;
+  repeated DatanodeStorageProto storage = 3;
+}
+
+message BlockReportCompletedResponseProto {}
+
 /**
  * Protocol used from datanode to the namenode
  * See the request and response for details of rpc call.
@@ -418,4 +429,8 @@ service DatanodeProtocolService {
   * Ask a namenode to read the small file data
   */
   rpc getSmallFileData (GetSmallFileDataProto) returns (SmallFileDataResponseProto);
+  /**
+   *
+   */
+  rpc notifyNamenodeBlockReportComplete (BlockReportCompletedRequestProto) returns (BlockReportCompletedResponseProto);
 }

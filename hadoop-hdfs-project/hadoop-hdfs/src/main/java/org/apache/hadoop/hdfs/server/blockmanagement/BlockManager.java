@@ -1964,6 +1964,25 @@ public class BlockManager {
     }
   }
 
+  public void notifyNamenodeBlockReportCompleted(DatanodeID nodeID, String blockPoolId, List<DatanodeStorage> storages) throws IOException {
+    DatanodeDescriptor node = datanodeManager.getDatanode(nodeID);
+    if (node == null || !node.isAlive) {
+      throw new IOException(
+              "ProcessReport from dead or unregistered node: " + nodeID);
+    }
+
+    for (DatanodeStorage storage : storages) {
+      DatanodeStorageInfo storageInfo = node.getStorageInfo(storage.getStorageID());
+      if (storageInfo == null) {
+        // We handle this for backwards compatibility.
+        storageInfo = node.updateStorage(storage);
+      }
+      storageInfo.receivedBlockReport();
+    }
+  }
+
+
+
   /**
    * StatefulBlockInfo is used to build the "toUC" list, which is a list of
    * updates to the information about under-construction blocks.

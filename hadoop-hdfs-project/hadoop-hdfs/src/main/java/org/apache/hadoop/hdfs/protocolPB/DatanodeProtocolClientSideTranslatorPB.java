@@ -52,6 +52,7 @@ import org.apache.hadoop.hdfs.server.namenode.NameNode;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
 import org.apache.hadoop.hdfs.server.protocol.HeartbeatResponse;
 import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
 import org.apache.hadoop.hdfs.server.protocol.ReceivedDeletedBlockInfo;
@@ -74,6 +75,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -356,6 +358,24 @@ public class DatanodeProtocolClientSideTranslatorPB
     } catch (ServiceException e) {
     throw ProtobufHelper.getRemoteException(e);
     }
+  }
+
+  @Override
+  public void notifyNamenodeBlockReportCompleted(DatanodeRegistration registration, String blockPoolId, List<DatanodeStorage> storages) throws IOException {
+    DatanodeProtocolProtos.BlockReportCompletedRequestProto.Builder request =
+            DatanodeProtocolProtos.BlockReportCompletedRequestProto.newBuilder();
+    request.setRegistration(PBHelper.convert(registration));
+    request.setBlockPoolId(blockPoolId);
+    for (DatanodeStorage storage : storages) {
+      request.addStorage(PBHelper.convert(storage));
+    }
+
+    try{
+      rpcProxy.notifyNamenodeBlockReportComplete(NULL_CONTROLLER, request.build());
+    } catch (ServiceException e) {
+      throw ProtobufHelper.getRemoteException(e);
+    }
+
   }
 
 

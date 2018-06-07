@@ -28,6 +28,8 @@ import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.security.KerberosInfo;
 
 import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.io.retry.AtMostOnce;
 import org.apache.hadoop.io.retry.Idempotent;
 
@@ -211,4 +213,6 @@ public interface DatanodeProtocol {
   @Idempotent
   public byte[] getSmallFileData(int id) throws IOException;
 
+  @Idempotent
+  public void notifyNamenodeBlockReportCompleted(DatanodeRegistration registration, String blockPoolId, List<DatanodeStorage> storages) throws IOException;
 }

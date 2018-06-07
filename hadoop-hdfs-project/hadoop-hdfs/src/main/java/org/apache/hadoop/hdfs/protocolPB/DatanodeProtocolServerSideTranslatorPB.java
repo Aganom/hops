@@ -50,6 +50,7 @@ import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.*;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
 import org.apache.hadoop.hdfs.server.protocol.HeartbeatResponse;
 import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
 import org.apache.hadoop.hdfs.server.protocol.ReceivedDeletedBlockInfo;
@@ -78,6 +79,9 @@ public class DatanodeProtocolServerSideTranslatorPB
   private static final CommitBlockSynchronizationResponseProto
       VOID_COMMIT_BLOCK_SYNCHRONIZATION_RESPONSE_PROTO =
       CommitBlockSynchronizationResponseProto.newBuilder().build();
+  private static final DatanodeProtocolProtos.BlockReportCompletedResponseProto
+          VOID_NOTIFY_NAMENODE_BLOCK_REPORT_COMPLETED_RESPONSE_PROTO =
+          DatanodeProtocolProtos.BlockReportCompletedResponseProto.newBuilder().build();
 
   public DatanodeProtocolServerSideTranslatorPB(DatanodeProtocol impl) {
     this.impl = impl;
@@ -288,6 +292,23 @@ public class DatanodeProtocolServerSideTranslatorPB
     try{
       byte[] data = impl.getSmallFileData(request.getId());
       return  PBHelper.convert(data);
+    } catch (IOException e){
+      throw new ServiceException(e);
+    }
+  }
+
+  @Override
+  public DatanodeProtocolProtos.BlockReportCompletedResponseProto notifyNamenodeBlockReportComplete(RpcController controller, DatanodeProtocolProtos.BlockReportCompletedRequestProto request) throws ServiceException {
+    DatanodeRegistration registration = PBHelper.convert(request.getRegistration());
+    String blockPoolId = request.getBlockPoolId();
+    List<DatanodeStorage> storages = new ArrayList<>();
+    for (DatanodeStorageProto datanodeStorageProto : request.getStorageList()) {
+      DatanodeStorage convert = PBHelper.convert(datanodeStorageProto);
+      storages.add(convert);
+    }
+    try {
+      impl.notifyNamenodeBlockReportCompleted(registration, blockPoolId, storages);
+      return VOID_NOTIFY_NAMENODE_BLOCK_REPORT_COMPLETED_RESPONSE_PROTO;
     } catch (IOException e){
       throw new ServiceException(e);
     }

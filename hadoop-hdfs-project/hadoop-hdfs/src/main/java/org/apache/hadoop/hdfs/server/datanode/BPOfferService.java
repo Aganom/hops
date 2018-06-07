@@ -966,6 +966,15 @@ public class IncrementalBRTask implements Callable{
 
       cmd = blkReportHander.blockReport(bpRegistration, getBlockPoolId(), reports);
 
+
+      for (BPServiceActor bpServiceActor : getBPServiceActors()) {
+        if (bpServiceActor != blkReportHander){
+          List<DatanodeStorage> storages = new ArrayList<>();
+          storages.addAll(perVolumeBlockLists.keySet());
+          bpServiceActor.notifyNamenodeBlockReportCompleted(bpRegistration, getBlockPoolId(), storages);
+        }
+      }
+
       // Log the block report processing stats from Datanode perspective
       long brSendCost = now() - brSendStartTime;
       long brCreateCost = brSendStartTime - brCreateStartTime;

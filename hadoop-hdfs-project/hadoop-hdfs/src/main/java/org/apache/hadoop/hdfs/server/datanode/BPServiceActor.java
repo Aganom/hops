@@ -33,6 +33,7 @@ import org.apache.hadoop.hdfs.server.common.IncorrectVersionException;
 import org.apache.hadoop.hdfs.server.namenode.FSNamesystem;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeCommand;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeRegistration;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
 import org.apache.hadoop.hdfs.server.protocol.DisallowedDatanodeException;
 import org.apache.hadoop.hdfs.server.protocol.HeartbeatResponse;
 import org.apache.hadoop.hdfs.server.protocol.NamespaceInfo;
@@ -50,6 +51,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.Collection;
+import java.util.List;
 
 import static org.apache.hadoop.util.Time.now;
 
@@ -581,6 +583,14 @@ class BPServiceActor implements Runnable {
   public DatanodeCommand blockReport(DatanodeRegistration registration,
       String poolId, StorageBlockReport[] reports) throws IOException {
     return bpNamenode.blockReport(registration, poolId, reports);
+  }
+
+  public void notifyNamenodeBlockReportCompleted(DatanodeRegistration registration,
+                                                 String poolId, List<DatanodeStorage> storages) throws IOException {
+    if (bpNamenode != null) {
+      bpNamenode.notifyNamenodeBlockReportCompleted(registration, poolId, storages);
+    }
+
   }
 
   public ActiveNode nextNNForBlkReport(long noOfBlks) throws IOException {
