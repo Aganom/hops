@@ -293,6 +293,7 @@ public class TestBlockReport2 {
    *
    * @throws IOException
    */
+  @Ignore //We do not yet handle file deletes yet
   @Test
   public void blockReport_01() throws IOException, InterruptedException {
     DistributedFileSystem fs = null;
@@ -430,6 +431,7 @@ public class TestBlockReport2 {
    * @throws IOException
    * @throws InterruptedException
    */
+  @Ignore //Requires implementation that handles block recovery
   @Test
   public void blockReport_03() throws IOException, InterruptedException {
     DistributedFileSystem fs = null;
@@ -512,11 +514,13 @@ public class TestBlockReport2 {
   /**
    * Test hard lease recovery
    */
+  @Ignore //Requires implementation that handles block recovery
   @Test
   public void blockReport_04() throws Exception {
     blockReprot_hardlease(true);
   }
 
+  @Ignore //Requires implementation that handles block recovery
   @Test
   public void blockReport_05() throws Exception {
     blockReprot_hardlease(false);
@@ -766,6 +770,7 @@ public class TestBlockReport2 {
   }
 
 
+  @Ignore //We do not yet handle file deletes yet
   @Test
   public void blockReport_09() throws IOException, InterruptedException {
     concurrentWrites(1 /*threads*/,
@@ -774,6 +779,7 @@ public class TestBlockReport2 {
             0 /*threshold*/);
   }
 
+  @Ignore //We do not yet handle file deletes yet
   @Test
   public void blockReport_10() throws IOException, InterruptedException {
     concurrentWrites(5 /*threads*/,
@@ -977,6 +983,7 @@ public class TestBlockReport2 {
       Configuration conf = new Configuration();
       int numBuckets = 5;
       setConfiguration(conf,numBuckets);
+      HashBuckets.setNumBucketsForTest(numBuckets);
       cluster = new MiniDFSCluster.Builder(conf).format
               (true).numDataNodes(NUM_DATANODES).build();
       fs = (DistributedFileSystem) cluster.getFileSystem();
@@ -1002,11 +1009,12 @@ public class TestBlockReport2 {
       sendAndCheckBR(0, NUM_DATANODES, cluster, poolId, 0, numBuckets);
 
       deleteHashes(0, cluster);
-      //Increase the number of bucktes
+      //Increase the number of buckets
       cluster.shutdown();
       conf = new Configuration();
       numBuckets = 10;
       setConfiguration(conf,numBuckets);
+      HashBuckets.setNumBucketsForTest(numBuckets);
       cluster = new MiniDFSCluster.Builder(conf).format
               (false).numDataNodes(NUM_DATANODES).build();
       cluster.waitActive();
@@ -1024,6 +1032,7 @@ public class TestBlockReport2 {
       conf = new Configuration();
       numBuckets = 3;
       setConfiguration(conf,numBuckets);
+      HashBuckets.setNumBucketsForTest(numBuckets);
       cluster = new MiniDFSCluster.Builder(conf).format
               (false).numDataNodes(NUM_DATANODES).build();
       cluster.waitActive();
@@ -1031,7 +1040,6 @@ public class TestBlockReport2 {
 
       matchDNandNNState(0, NUM_DATANODES, cluster, NUM_DATANODES*numBuckets, numBuckets);
       sendAndCheckBR(0, NUM_DATANODES, cluster, poolId, NUM_DATANODES*numBuckets, numBuckets);
-
 
       matchDNandNNState(0, NUM_DATANODES, cluster, 0, numBuckets);
       sendAndCheckBR(0, NUM_DATANODES, cluster, poolId, 0, numBuckets);

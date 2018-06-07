@@ -61,7 +61,12 @@ public class HashBuckets {
       throw new RuntimeException("HashBuckets have not been initialized");
     }
   }
-  
+
+  @VisibleForTesting
+  public static void setNumBucketsForTest(int newNumBuckets){
+    numBuckets = newNumBuckets;
+  }
+
   public int getBucketForBlock(Block block){
     return (int) (block.getBlockId() % numBuckets);
   }
@@ -160,6 +165,9 @@ public class HashBuckets {
     findHashesHandler.handle();
   }
 
+  public int getNumBuckets(){
+    return numBuckets;
+  }
 
   HashBucket getBucket(int storageId, int bucketId)
       throws TransactionContextException, StorageException {

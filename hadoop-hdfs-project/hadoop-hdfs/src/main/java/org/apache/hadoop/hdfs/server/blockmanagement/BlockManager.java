@@ -2171,6 +2171,11 @@ public class BlockManager {
     Collection<BlockToMarkCorrupt> toCorrupt = Collections.newSetFromMap(mapToCorrupt);
     Collection<StatefulBlockInfo> toUC = Collections.newSetFromMap(mapToUC);
 
+    if (HashBuckets.getInstance().getNumBuckets() != report.getBuckets().length){
+        throw new IOException("Incorrect number of buckets in report. DN: "
+                + report.getBuckets().length + ", NN: " + HashBuckets.getInstance().getNumBuckets());
+    }
+
     final boolean firstBlockReport =
         namesystem.isInStartupSafeMode() || storage.getBlockReportCount() == 0;
     if (storage.getBlockReportCount() == 0){
